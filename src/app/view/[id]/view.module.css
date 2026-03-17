@@ -1,0 +1,136 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: radial-gradient(circle at top right, #1e293b, #0f172a);
+}
+
+.card {
+  width: 100%;
+  max-width: 800px;
+  padding: 2.5rem;
+  border-radius: 24px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.iconWrapper {
+  width: 64px;
+  height: 64px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header h1 {
+  font-size: 1.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.header p {
+  color: #94a3b8;
+  font-size: 0.875rem;
+}
+
+.content {
+  margin-bottom: 2.5rem;
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.iframe {
+  border: none;
+  background: white;
+}
+
+.imageFrame {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.mainImage {
+  max-width: 100%;
+  max-height: 70vh;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+}
+
+.footer {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.secondaryBtn {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s;
+}
+
+.secondaryBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.branding {
+  margin-top: 2rem;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.loading, .error {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+}
+
+.mobileOnly {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .footer {
+    flex-direction: column;
+  }
+  
+  .footer > * {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .pdfFrame iframe {
+    display: none;
+  }
+  
+  .mobileOnly {
+    display: block;
+    padding: 2rem;
+    text-align: center;
+    color: #94a3b8;
+  }
+}

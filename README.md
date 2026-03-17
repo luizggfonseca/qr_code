@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🚀 QR Master - Gerador Avançado de QR Codes
 
-## Getting Started
+![Banner](./public/banner.png)
 
-First, run the development server:
+## 📋 Sobre o Projeto
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+O **QR Master** é uma aplicação web moderna e robusta desenvolvida com **Next.js 15**, focada na criação, gestão e customização de QR Codes para diversas finalidades. Desde simples links até configurações complexas de WiFi, cartões de visita (vCard) e pagamentos via PIX.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Este projeto foi construído priorizando a experiência do usuário (UX) com uma interface limpa, utilizando princípios de **Glassmorphism** e um sistema de design premium.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## ✨ Funcionalidades Principais
 
-## Learn More
+| Tipo | Descrição |
+| :--- | :--- |
+| **🌐 URL / Link** | Gere QR Codes para qualquer endereço web. |
+| **📶 WiFi** | Compartilhe sua rede com rede, senha e tipo de segurança. |
+| **🎨 Customização PRO** | Altere as cores de fundo e do código de forma dinâmica. |
+| **📄 PDF & Fotos** | Upload de arquivos com Landing Page dedicada para visualização. |
+| **💳 PIX** | Geração de QR Codes para pagamentos instantâneos. |
+| **📱 Social Media** | Suporte para WhatsApp, Instagram, LinkedIn e YouTube. |
+| **📅 Eventos** | Crie convites com data, hora e localização. |
+| **📇 vCard** | Cartão de visita digital completo com contatos. |
+| **🔍 Gerenciamento** | Busca em tempo real e filtros por categoria. |
+| **🖨️ Modo Impressão** | Layout otimizado em folha A4 para impressão imediata. |
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🛠️ Tecnologias Utilizadas
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Core**: [Next.js 15](https://nextjs.org/) (App Router)
+- **Linguagem**: [TypeScript](https://www.typescriptlang.org/)
+- **Banco de Dados**: [SQLite](https://sqlite.org/) com `better-sqlite3`
+- **Estilização**: Modern Vanilla CSS (CSS Modules)
+- **Ícones**: [Lucide React](https://lucide.dev/)
+- **QR Engine**: `qrcode`
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🚀 Como Executar o Projeto
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Clone o repositório:**
+   ```bash
+   git clone https://github.com/luizggfonseca/qr_code.git
+   ```
+
+2. **Instale as dependências:**
+   ```bash
+   npm install
+   ```
+
+3. **Inicie o servidor de desenvolvimento:**
+   ```bash
+   npm run dev
+   ```
+
+4. **Acesse no navegador:**
+   Abra [http://localhost:3000](http://localhost:3000)
+
+---
+
+## 📁 Estrutura do Projeto
+
+- `src/app`: Rotas e lógica da aplicação.
+- `src/components`: Componentes modulares e reutilizáveis.
+- `src/lib`: Utilitários e conexão com banco de dados.
+- `public/uploads`: Repositório local para arquivos enviados.
+
+---
+
+## 📝 Licença
+
+Este projeto é de uso livre para fins de estudo e desenvolvimento pessoal.
+
+---
+
+Desenvolvido por **Luiz G G Fonseca** 🚀
