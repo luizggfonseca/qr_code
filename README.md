@@ -1,7 +1,5 @@
 # 🚀 QR Master - Gerador Avançado de QR Codes
 
-![Banner](./public/banner.png)
-
 ## 📋 Sobre o Projeto
 
 O **QR Master** é uma aplicação web moderna e robusta desenvolvida com **Next.js 15**, focada na criação, gestão e customização de QR Codes para diversas finalidades. Desde simples links até configurações complexas de WiFi, cartões de visita (vCard) e pagamentos via PIX.
