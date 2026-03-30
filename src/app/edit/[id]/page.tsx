@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import CreateForm from '@/components/CreateForm';
-import styles from '@/app/create/[type]/page.module.css';
+import styles from '@/app/create/create.module.css';
 
 function EditQRContent() {
   const params = useParams();

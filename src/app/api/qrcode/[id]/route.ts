@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
-import { writeFile, unlink } from 'fs/promises';
+import { writeFile, unlink, mkdir } from 'fs/promises';
 import path from 'path';
 
 export async function GET(
@@ -45,8 +45,13 @@ export async function PUT(
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
       const fileName = `${Date.now()}-${file.name}`;
+      const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+      
+      // Garante que a pasta existe
+      await mkdir(uploadsDir, { recursive: true });
+      
       filePath = `/uploads/${fileName}`;
-      await writeFile(path.join(process.cwd(), 'public', 'uploads', fileName), buffer);
+      await writeFile(path.join(uploadsDir, fileName), buffer);
     }
     
     db.prepare(`

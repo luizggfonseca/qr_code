@@ -30,7 +30,21 @@ Este documento contém o registro das interações e decisões tomadas durante o
 
 ---
 
+### **Sessão: 30 de Março de 2026 (Parte II)**
+
+**USER**: Solicitou melhorias na responsividade mobile e na funcionalidade de edição.
+**ANTIGRAVITY**: 
+- **Responsividade**: Media queries para layout mobile em grid de uma coluna.
+- **Edição**: Criada rota `/edit/[id]`, evoluída `form_data` no SQLite e API para `PUT`.
+- **Botão Editar**: Ícone `Edit2` adicionado em cada card.
+
+---
+
 ### **Decisões Técnicas**
 - **UX**: Prioridade para a criação rápida, movendo o formulário de categorias para o topo.
 - **Performance**: Uso do Next.js Turbopack para agilidade no desenvolvimento.
-- **Conformidade**: Seguimento rigoroso das normas do Banco Central para payloads PIX.
+- **Flexibilidade**: Uso de JSON e `form_data` (SQLite) para persistir entradas complexas de formulário.
+- **Responsividade**: Garantia de usabilidade mobile via Media Queries personalizadas.
+
+---
+Log concluído em: 30/03/2026

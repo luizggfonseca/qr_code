@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
-import { writeFile } from 'fs/promises';
+import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 
 export async function POST(req: NextRequest) {
@@ -10,9 +10,9 @@ export async function POST(req: NextRequest) {
     const title = formData.get('title') as string;
     const content = formData.get('content') as string;
     const formDataJson = formData.get('formDataJson') as string;
-    const file = formData.get('file') as File | null;
     const color = (formData.get('color') as string) || '#000000';
     const bgcolor = (formData.get('bgcolor') as string) || '#ffffff';
+    const file = formData.get('file') as File | null;
 
     let filePath = null;
 
@@ -21,8 +21,13 @@ export async function POST(req: NextRequest) {
       const buffer = Buffer.from(bytes);
       
       const fileName = `${Date.now()}-${file.name}`;
+      const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+      
+      // Garante que a pasta existe
+      await mkdir(uploadsDir, { recursive: true });
+      
       filePath = `/uploads/${fileName}`;
-      const absolutePath = path.join(process.cwd(), 'public', 'uploads', fileName);
+      const absolutePath = path.join(uploadsDir, fileName);
       
       await writeFile(absolutePath, buffer);
     }
