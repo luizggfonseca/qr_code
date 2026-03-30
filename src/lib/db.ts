@@ -1,8 +1,15 @@
 import Database from 'better-sqlite3';
 import path from 'path';
+import fs from 'fs';
 
 // Database path: uses environment variable for persistence (Railway/VPS) or local file for dev
 const DB_PATH = process.env.DATABASE_PATH || path.join(process.cwd(), 'database.sqlite');
+
+// Garante que o diretório do banco de dados exista (importante para Volumes do Railway)
+const dbDir = path.dirname(DB_PATH);
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
 
 const db = new Database(DB_PATH);
 
