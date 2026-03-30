@@ -23,7 +23,8 @@ import {
   Search,
   Filter,
   Download,
-  Printer
+  Printer,
+  Edit2
 } from "lucide-react";
 import Link from "next/link";
 import ModalStyles from "@/components/Modal.module.css";
@@ -202,11 +203,14 @@ export default function Home() {
                     <div className={styles.iconWrapper} style={{ width: '32px', height: '32px', color: categories.find(c => c.id === qr.type)?.color || 'var(--primary)' }}>
                       {getIcon(qr.type)}
                     </div>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', gap: '0.8rem' }}>
+                      <Link href={`/edit/${qr.id}`} title="Editar" style={{ color: '#94a3b8' }}>
+                        <Edit2 size={16} />
+                      </Link>
                       <Link href={`/print/${qr.id}`} title="Imprimir" style={{ color: '#94a3b8' }}>
                         <Printer size={16} />
                       </Link>
-                      <button onClick={() => setShowDeleteModal(qr.id)} style={{ background: 'none', border: 'none', color: '#f43f5e', cursor: 'pointer' }}>
+                      <button onClick={() => setShowDeleteModal(qr.id)} style={{ background: 'none', border: 'none', color: '#f43f5e', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                         <Trash2 size={16} />
                       </button>
                     </div>
@@ -216,7 +220,7 @@ export default function Home() {
                   
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
                     <QRCodeComponent 
-                      content={(qr.type === 'pdf' || qr.type === 'photo') ? `${window.location.protocol}//${window.location.host}/view/${qr.id}` : qr.content} 
+                      content={(qr.type === 'pdf' || qr.type === 'photo') ? `https://${typeof window !== 'undefined' ? window.location.host : ''}/view/${qr.id}` : qr.content} 
                       color={qr.color}
                       bgcolor={qr.bgcolor}
                     />

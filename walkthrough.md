@@ -111,3 +111,13 @@ A tabela `qr_codes` no SQLite (`database.sqlite`) armazena:
 
 O projeto "Gerador PRO" agora conta com uma base sólida para uso comercial, com layout clean, sistema de sorting eficiente e suporte ao padrão bancário brasileiro para PIX. A documentação foi totalmente atualizada para refletir o estado de excelência alcançado.
 
+## 11. Edição de QR Codes Gerados (Novo) - Concluído ✅
+
+*   **Persistência de Estado (form_data)**: Adicionada nova coluna JSON `form_data` ao banco de dados SQLite para permitir que os QR codes já gerados possam ser editados com seus dados originais preservados.
+*   **API PUT (Update)**: Evolução do endpoint individual para suportar `FormData`, permitindo atualizar títulos, metadados e arquivos (PDF/Fotos) de forma reativa.
+*   **Interface de Edição**: Criação da rota dinâmica `/edit/[id]` que carrega o formulário original pré-preenchido.
+*   **Novo Botão de Ação**: Ícone de edição (`Edit2`) integrado em cada card na listagem principal.
+
+---
+Documento atualizado em: 30/03/2026
+

@@ -9,13 +9,14 @@ export async function POST(req: NextRequest) {
     const type = formData.get('type') as string;
     const title = formData.get('title') as string;
     const content = formData.get('content') as string;
+    const formDataJson = formData.get('formDataJson') as string;
     const file = formData.get('file') as File | null;
     const color = (formData.get('color') as string) || '#000000';
     const bgcolor = (formData.get('bgcolor') as string) || '#ffffff';
 
     let filePath = null;
 
-    if (file) {
+    if (file && file.size > 0) {
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
       
@@ -27,11 +28,11 @@ export async function POST(req: NextRequest) {
     }
 
     const stmt = db.prepare(`
-      INSERT INTO qr_codes (type, title, content, file_path, color, bgcolor)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO qr_codes (type, title, content, form_data, file_path, color, bgcolor)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `);
     
-    const result = stmt.run(type, title, content, filePath, color, bgcolor);
+    const result = stmt.run(type, title, content, formDataJson, filePath, color, bgcolor);
 
     return NextResponse.json({ 
       success: true, 

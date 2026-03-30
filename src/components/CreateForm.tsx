@@ -12,19 +12,30 @@ import styles from '@/app/create/create.module.css';
 
 interface Props {
   type: string;
+  initialData?: any;
 }
 
-export default function CreateForm({ type }: Props) {
+export default function CreateForm({ type, initialData }: Props) {
   const router = useRouter();
-  const [title, setTitle] = useState('');
-  const [formData, setFormData] = useState<any>({});
+  const [title, setTitle] = useState(initialData?.title || '');
+  const [formData, setFormData] = useState<any>(
+    initialData?.form_data ? JSON.parse(initialData.form_data) : {}
+  );
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  const [qrColor, setQrColor] = useState('#000000');
-  const [qrBgColor, setQrBgColor] = useState('#ffffff');
-  const [pixMode, setPixMode] = useState('static');
+  const [qrColor, setQrColor] = useState(initialData?.color || '#000000');
+  const [qrBgColor, setQrBgColor] = useState(initialData?.bgcolor || '#ffffff');
+  const [pixMode, setPixMode] = useState(
+    initialData?.form_data ? (JSON.parse(initialData.form_data).pixMode || 'static') : 'static'
+  );
 
+  useEffect(() => {
+    if (initialData?.form_data) {
+      const parsed = JSON.parse(initialData.form_data);
+      if (parsed.pixMode) setPixMode(parsed.pixMode);
+    }
+  }, [initialData]);
 
   const getTitleByType = () => {
     const titles: any = {
@@ -85,7 +96,7 @@ export default function CreateForm({ type }: Props) {
         return `WIFI:T:${formData.encryption || 'WPA'};S:${formData.ssid || ''};P:${formData.password || ''};;`;
       case 'pdf':
       case 'photo':
-        return `FILE_URL_PLACEHOLDER`;
+        return initialData?.content === 'FILE_URL_PLACEHOLDER' ? 'FILE_URL_PLACEHOLDER' : (initialData?.content || 'FILE_URL_PLACEHOLDER');
       default:
         return '';
     }
@@ -110,7 +121,7 @@ export default function CreateForm({ type }: Props) {
     } else {
       setQrDataUrl('');
     }
-  }, [formData, type, qrColor, qrBgColor]);
+  }, [formData, type, qrColor, qrBgColor, pixMode]);
 
   const handleInputChange = (e: any) => {
     const { name, value } = e.target;
@@ -137,6 +148,9 @@ export default function CreateForm({ type }: Props) {
       data.append('color', qrColor);
       data.append('bgcolor', qrBgColor);
       
+      const fullFormData = { ...formData, pixMode };
+      data.append('formDataJson', JSON.stringify(fullFormData));
+      
       let content = generateQRCodeContent();
       data.append('content', content);
       
@@ -144,8 +158,15 @@ export default function CreateForm({ type }: Props) {
         data.append('file', file);
       }
 
-      const res = await fetch('/api/qrcode', {
-        method: 'POST',
+      if (initialData?.file_path) {
+        data.append('file_path', initialData.file_path);
+      }
+
+      const url = initialData?.id ? `/api/qrcode/${initialData.id}` : '/api/qrcode';
+      const method = initialData?.id ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         body: data,
       });
 
@@ -170,11 +191,11 @@ export default function CreateForm({ type }: Props) {
           <>
             <div className={styles.inputGroup}>
               <label>Número do WhatsApp (com DDD)</label>
-              <input name="phone" onChange={handleInputChange} placeholder="Ex: 11988888888" />
+              <input name="phone" value={formData.phone || ''} onChange={handleInputChange} placeholder="Ex: 11988888888" />
             </div>
             <div className={styles.inputGroup}>
               <label>Mensagem Inicial (Opcional)</label>
-              <textarea name="message" onChange={handleInputChange} placeholder="Olá, gostaria de mais informações..." rows={3} />
+              <textarea name="message" value={formData.message || ''} onChange={handleInputChange} placeholder="Olá, gostaria de mais informações..." rows={3} />
             </div>
           </>
         );
@@ -183,15 +204,15 @@ export default function CreateForm({ type }: Props) {
           <>
             <div className={styles.inputGroup}>
               <label>E-mail do Destinatário</label>
-              <input name="email" type="email" onChange={handleInputChange} placeholder="exemplo@email.com" />
+              <input name="email" type="email" value={formData.email || ''} onChange={handleInputChange} placeholder="exemplo@email.com" />
             </div>
             <div className={styles.inputGroup}>
               <label>Assunto</label>
-              <input name="subject" onChange={handleInputChange} placeholder="Assunto do e-mail" />
+              <input name="subject" value={formData.subject || ''} onChange={handleInputChange} placeholder="Assunto do e-mail" />
             </div>
             <div className={styles.inputGroup}>
               <label>Corpo da Mensagem</label>
-              <textarea name="body" onChange={handleInputChange} rows={3} />
+              <textarea name="body" value={formData.body || ''} onChange={handleInputChange} rows={3} />
             </div>
           </>
         );
@@ -221,31 +242,31 @@ export default function CreateForm({ type }: Props) {
               <>
                 <div className={styles.inputGroup}>
                   <label>Chave PIX</label>
-                  <input name="key" onChange={handleInputChange} placeholder="E-mail, CPF, CNPJ ou Celular" />
+                  <input name="key" value={formData.key || ''} onChange={handleInputChange} placeholder="E-mail, CPF, CNPJ ou Celular" />
                 </div>
                 <div className={styles.inputGroup}>
                   <label>Nome do Recebedor</label>
-                  <input name="name" onChange={handleInputChange} placeholder="Ex: JOAO DA SILVA" />
+                  <input name="name" value={formData.name || ''} onChange={handleInputChange} placeholder="Ex: JOAO DA SILVA" />
                 </div>
                 <div className={styles.inputGroup}>
                   <label>Cidade do Recebedor</label>
-                  <input name="city" onChange={handleInputChange} placeholder="Ex: SAO PAULO" />
+                  <input name="city" value={formData.city || ''} onChange={handleInputChange} placeholder="Ex: SAO PAULO" />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div className={styles.inputGroup}>
                     <label>Valor (Opcional)</label>
-                    <input name="amount" type="number" step="0.01" onChange={handleInputChange} placeholder="0.00" />
+                    <input name="amount" type="number" step="0.01" value={formData.amount || ''} onChange={handleInputChange} placeholder="0.00" />
                   </div>
                   <div className={styles.inputGroup}>
                     <label>TXID (Identificador)</label>
-                    <input name="txId" onChange={handleInputChange} placeholder="Opcional" />
+                    <input name="txId" value={formData.txId || ''} onChange={handleInputChange} placeholder="Opcional" />
                   </div>
                 </div>
               </>
             ) : (
               <div className={styles.inputGroup}>
                 <label>URL de Cobrança (Location)</label>
-                <input name="url" onChange={handleInputChange} placeholder="Ex: https://pix.me/..." />
+                <input name="url" value={formData.url || ''} onChange={handleInputChange} placeholder="Ex: https://pix.me/..." />
                 <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', opacity: 0.6 }}>
                   Cole o link retornado pela sua API do banco (Endpoint /cob).
                 </p>
@@ -260,14 +281,14 @@ export default function CreateForm({ type }: Props) {
         return (
           <div className={styles.inputGroup}>
             <label>Nome de Usuário (Username)</label>
-            <input name="username" onChange={handleInputChange} placeholder="Ex: seunome_perfil" />
+            <input name="username" value={formData.username || ''} onChange={handleInputChange} placeholder="Ex: seunome_perfil" />
           </div>
         );
       case 'youtube':
         return (
           <div className={styles.inputGroup}>
             <label>URL do Canal ou Vídeo</label>
-            <input name="url" onChange={handleInputChange} placeholder="https://youtube.com/..." />
+            <input name="url" value={formData.url || ''} onChange={handleInputChange} placeholder="https://youtube.com/..." />
           </div>
         );
       case 'sms':
@@ -275,11 +296,11 @@ export default function CreateForm({ type }: Props) {
           <>
             <div className={styles.inputGroup}>
               <label>Número do Telefone</label>
-              <input name="phone" onChange={handleInputChange} placeholder="Ex: 11988888888" />
+              <input name="phone" value={formData.phone || ''} onChange={handleInputChange} placeholder="Ex: 11988888888" />
             </div>
             <div className={styles.inputGroup}>
               <label>Mensagem SMS</label>
-              <textarea name="message" onChange={handleInputChange} rows={2} />
+              <textarea name="message" value={formData.message || ''} onChange={handleInputChange} rows={2} />
             </div>
           </>
         );
@@ -288,19 +309,19 @@ export default function CreateForm({ type }: Props) {
           <>
             <div className={styles.inputGroup}>
               <label>Nome do Evento</label>
-              <input name="summary" onChange={handleInputChange} placeholder="Ex: Reunião de Planejamento" />
+              <input name="summary" value={formData.summary || ''} onChange={handleInputChange} placeholder="Ex: Reunião de Planejamento" />
             </div>
             <div className={styles.inputGroup}>
               <label>Data de Início</label>
-              <input name="start" type="date" onChange={handleInputChange} />
+              <input name="start" type="date" value={formData.start || ''} onChange={handleInputChange} />
             </div>
             <div className={styles.inputGroup}>
               <label>Localização</label>
-              <input name="location" onChange={handleInputChange} placeholder="Ex: Sala de Reuniões 1" />
+              <input name="location" value={formData.location || ''} onChange={handleInputChange} placeholder="Ex: Sala de Reuniões 1" />
             </div>
             <div className={styles.inputGroup}>
               <label>Descrição</label>
-              <textarea name="description" onChange={handleInputChange} rows={3} />
+              <textarea name="description" value={formData.description || ''} onChange={handleInputChange} rows={3} />
             </div>
           </>
         );
@@ -309,23 +330,23 @@ export default function CreateForm({ type }: Props) {
           <>
             <div className={styles.inputGroup}>
               <label>Nome</label>
-              <input name="firstName" onChange={handleInputChange} placeholder="Ex: João" />
+              <input name="firstName" value={formData.firstName || ''} onChange={handleInputChange} placeholder="Ex: João" />
             </div>
             <div className={styles.inputGroup}>
               <label>Sobrenome</label>
-              <input name="lastName" onChange={handleInputChange} placeholder="Ex: Silva" />
+              <input name="lastName" value={formData.lastName || ''} onChange={handleInputChange} placeholder="Ex: Silva" />
             </div>
             <div className={styles.inputGroup}>
               <label>Telefone</label>
-              <input name="phone" onChange={handleInputChange} placeholder="Ex: +55 11 98888-8888" />
+              <input name="phone" value={formData.phone || ''} onChange={handleInputChange} placeholder="Ex: +55 11 98888-8888" />
             </div>
             <div className={styles.inputGroup}>
               <label>Email</label>
-              <input name="email" type="email" onChange={handleInputChange} placeholder="Ex: joao@exemplo.com" />
+              <input name="email" type="email" value={formData.email || ''} onChange={handleInputChange} placeholder="Ex: joao@exemplo.com" />
             </div>
             <div className={styles.inputGroup}>
               <label>Empresa</label>
-              <input name="company" onChange={handleInputChange} placeholder="Ex: Acme Corp" />
+              <input name="company" value={formData.company || ''} onChange={handleInputChange} placeholder="Ex: Acme Corp" />
             </div>
           </>
         );
@@ -334,16 +355,16 @@ export default function CreateForm({ type }: Props) {
           <>
             <div className={styles.inputGroup}>
               <label>Endereço Completo</label>
-              <textarea name="address" onChange={handleInputChange} placeholder="Ex: Av. Paulista, 1000, São Paulo - SP" />
+              <textarea name="address" value={formData.address || ''} onChange={handleInputChange} placeholder="Ex: Av. Paulista, 1000, São Paulo - SP" />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div className={styles.inputGroup}>
                 <label>Latitude (Opcional)</label>
-                <input name="lat" onChange={handleInputChange} placeholder="-23.5505" />
+                <input name="lat" value={formData.lat || ''} onChange={handleInputChange} placeholder="-23.5505" />
               </div>
               <div className={styles.inputGroup}>
                 <label>Longitude (Opcional)</label>
-                <input name="lon" onChange={handleInputChange} placeholder="-46.6333" />
+                <input name="lon" value={formData.lon || ''} onChange={handleInputChange} placeholder="-46.6333" />
               </div>
             </div>
           </>
@@ -352,7 +373,7 @@ export default function CreateForm({ type }: Props) {
         return (
           <div className={styles.inputGroup}>
             <label>Número do Telefone</label>
-            <input name="number" type="tel" onChange={handleInputChange} placeholder="Ex: +55 11 98888-8888" />
+            <input name="number" type="tel" value={formData.number || ''} onChange={handleInputChange} placeholder="Ex: +55 11 98888-8888" />
           </div>
         );
       case 'wifi':
@@ -360,15 +381,15 @@ export default function CreateForm({ type }: Props) {
           <>
             <div className={styles.inputGroup}>
               <label>Nome da Rede (SSID)</label>
-              <input name="ssid" onChange={handleInputChange} placeholder="Ex: Minha_Rede" />
+              <input name="ssid" value={formData.ssid || ''} onChange={handleInputChange} placeholder="Ex: Minha_Rede" />
             </div>
             <div className={styles.inputGroup}>
               <label>Senha</label>
-              <input name="password" type="password" onChange={handleInputChange} placeholder="Sua senha secreta" />
+              <input name="password" type="password" value={formData.password || ''} onChange={handleInputChange} placeholder="Sua senha secreta" />
             </div>
             <div className={styles.inputGroup}>
               <label>Criptografia</label>
-              <select name="encryption" onChange={handleInputChange}>
+              <select name="encryption" value={formData.encryption || 'WPA'} onChange={handleInputChange}>
                 <option value="WPA">WPA/WPA2</option>
                 <option value="WEP">WEP</option>
                 <option value="nopass">Sem Senha</option>
@@ -381,6 +402,11 @@ export default function CreateForm({ type }: Props) {
         return (
           <div className={styles.inputGroup}>
             <label>Upload do Arquivo ({type === 'pdf' ? 'PDF' : 'Imagem'})</label>
+            {initialData?.file_path && (
+               <p style={{ marginBottom: '0.5rem', fontSize: '0.8rem', color: '#10b981' }}>
+                 Arquivo atual: {initialData.file_path.split('/').pop()} (Opcional re-upload)
+               </p>
+            )}
             <input 
               type="file" 
               accept={type === 'pdf' ? '.pdf' : 'image/*'} 
@@ -403,7 +429,7 @@ export default function CreateForm({ type }: Props) {
 
       <div className={styles.layout}>
         <div className={`${styles.formSection} glass`}>
-          <h2>Criar QR Code de {getTitleByType()}</h2>
+          <h2>{initialData?.id ? 'Editar' : 'Criar'} QR Code de {getTitleByType()}</h2>
           
           <div className={styles.inputGroup}>
             <label>Título para sua Identificação</label>

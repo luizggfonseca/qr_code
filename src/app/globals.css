@@ -70,3 +70,10 @@ a {
               radial-gradient(circle at bottom left, rgba(244, 63, 94, 0.03), transparent 40%);
 }
 
+@media (max-width: 768px) {
+  .main-container {
+    padding: 1rem;
+  }
+}
+
+

@@ -12,6 +12,7 @@ db.exec(`
     type TEXT NOT NULL,
     title TEXT NOT NULL,
     content TEXT NOT NULL,
+    form_data TEXT,
     file_path TEXT,
     color TEXT DEFAULT '#000000',
     bgcolor TEXT DEFAULT '#ffffff',
