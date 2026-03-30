@@ -30,6 +30,7 @@ export async function PUT(
     const formDataJson = formData.get('formDataJson') as string;
     const color = (formData.get('color') as string) || '#000000';
     const bgcolor = (formData.get('bgcolor') as string) || '#ffffff';
+    const expiresAt = formData.get('expiresAt') as string;
     const file = formData.get('file') as File | null;
 
     let filePath = formData.get('file_path') as string | null;

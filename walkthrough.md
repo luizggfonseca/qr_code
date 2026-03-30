@@ -100,6 +100,20 @@ A tabela `qr_codes` no SQLite (`database.sqlite`) armazena:
 - [x] **PIX 2.0**: Suporte total a chaves Estáticas (Payload EMV) e Dinâmicas (Location URLs).
 - [x] **Sincronização com GitHub**: Realizado o commit e push de todas as novas funcionalidades e melhorias.
 
+### Fase 5: Ciclo de Vida e Expiração (Finalização)
+- **Lazy Cleanup**: Sistema automático que remove QR Codes expirados ao carregar a página inicial.
+- **Gestão de Arquivos**: Unlink (deleção física) de PDFs e Fotos órfãos quando um registro expira ou é deletado.
+- **Edição Retroativa**: Implementada a rota `PUT` para editar registros existentes sem perder o ID.
+- **Volume Persistente**: Configuração final para Railway utilizando `/app/storage` para Banco de Dados e Uploads.
+
+## Arquitetura Final
+- **Frontend**: Next.js 15 (App Router) + CSS Modules (Offwhite & Navy).
+- **Backend**: API Routes com integração SQLite (Better-SQLite3).
+- **Storage**: Sistema híbrido (Local para Dev / Volume Mount para Prod).
+- **Segurança**: Rota de arquivos dinâmica para servir anexos de fora do diretório público.
+
+O projeto está **PRONTO PARA DEPLOY** e operando com estabilidade total.
+
 ### 9.1. Procedimento de Upload
 
 1. `git pull origin main` (Sincronização preventiva).

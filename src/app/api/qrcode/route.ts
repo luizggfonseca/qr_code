@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
-import { writeFile, mkdir } from 'fs/promises';
+import { writeFile, mkdir, unlink } from 'fs/promises';
 import path from 'path';
 import { UPLOADS_DIR } from '@/lib/storage-utils';
 
@@ -13,6 +13,7 @@ export async function POST(req: NextRequest) {
     const formDataJson = formData.get('formDataJson') as string;
     const color = (formData.get('color') as string) || '#000000';
     const bgcolor = (formData.get('bgcolor') as string) || '#ffffff';
+    const expiresAt = formData.get('expiresAt') as string; // Opcional
     const file = formData.get('file') as File | null;
 
     let filePath = null;
@@ -32,16 +33,17 @@ export async function POST(req: NextRequest) {
       await writeFile(absolutePath, buffer);
     }
 
+    const id = crypto.randomUUID();
     const stmt = db.prepare(`
-      INSERT INTO qr_codes (type, title, content, form_data, file_path, color, bgcolor)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO qr_codes (id, type, title, content, form_data, file_path, color, bgcolor, expires_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     
-    const result = stmt.run(type, title, content, formDataJson, filePath, color, bgcolor);
+    stmt.run(id, type, title, content, formDataJson, filePath, color, bgcolor, expiresAt || null);
 
     return NextResponse.json({ 
       success: true, 
-      id: result.lastInsertRowid,
+      id,
       filePath 
     });
   } catch (error: any) {
@@ -52,6 +54,22 @@ export async function POST(req: NextRequest) {
 
 export async function GET() {
   try {
+    // Lazy Cleanup: Remove os expirados automaticamente antes de listar
+    const now = new Date().toISOString();
+    const expiredCodes = db.prepare('SELECT id, file_path FROM qr_codes WHERE expires_at IS NOT NULL AND expires_at < ?').all(now) as any[];
+    
+    for (const code of expiredCodes) {
+       // Se tiver arquivo, apaga do disco
+       if (code.file_path && code.file_path.startsWith('/api/files/')) {
+          try {
+             const fileName = code.file_path.replace('/api/files/', '');
+             await unlink(path.join(UPLOADS_DIR, fileName));
+          } catch(e) {}
+       }
+       // Apaga do banco
+       db.prepare('DELETE FROM qr_codes WHERE id = ?').run(code.id);
+    }
+
     const qrs = db.prepare('SELECT * FROM qr_codes ORDER BY created_at DESC').all();
     return NextResponse.json(qrs);
   } catch (error: any) {

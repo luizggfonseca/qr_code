@@ -216,9 +216,14 @@ export default function Home() {
                     </div>
                   </div>
                   <h3 style={{ fontSize: '1rem', marginBottom: '0.25rem' }}>{qr.title}</h3>
-                  <p style={{ fontSize: '0.75rem', opacity: 0.6, marginBottom: '1.5rem' }}>{new Date(qr.created_at).toLocaleDateString('pt-BR')}</p>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+                  <p className={styles.typeTag}>{qr.type?.toUpperCase()}</p>
+                  <p className={styles.date}>Criado em: {new Date(qr.created_at).toLocaleDateString('pt-BR')}</p>
+                  {qr.expires_at && (
+                    <p className={styles.expiryDate} style={{ color: '#f87171', fontSize: '0.75rem', marginTop: '4px' }}>
+                      Expira em: {new Date(qr.expires_at).toLocaleDateString('pt-BR')}
+                    </p>
+                  )}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', marginTop: '1rem' }}>
                     <QRCodeComponent 
                       content={(qr.type === 'pdf' || qr.type === 'photo') ? `https://${typeof window !== 'undefined' ? window.location.host : ''}/view/${qr.id}` : qr.content} 
                       color={qr.color}

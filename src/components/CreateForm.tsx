@@ -26,9 +26,22 @@ export default function CreateForm({ type, initialData }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [qrColor, setQrColor] = useState(initialData?.color || '#000000');
   const [qrBgColor, setQrBgColor] = useState(initialData?.bgcolor || '#ffffff');
+  
+  // Regra: WiFi e PIX permitem "never", os outros expiram por padrão (ex: 1 mês)
+  const isInfiniteAllowed = type === 'wifi' || type === 'pix';
+  const [expiryOption, setExpiryOption] = useState(initialData?.expires_at ? 'custom' : (isInfiniteAllowed ? 'never' : '1m'));
+  
+  const [customExpiryDate, setCustomExpiryDate] = useState('');
   const [pixMode, setPixMode] = useState(
     initialData?.form_data ? (JSON.parse(initialData.form_data).pixMode || 'static') : 'static'
   );
+
+  useEffect(() => {
+    if (initialData?.expires_at) {
+       setExpiryOption('custom');
+       setCustomExpiryDate(new Date(initialData.expires_at).toISOString().split('T')[0]);
+    }
+  }, [initialData]);
 
   useEffect(() => {
     if (initialData?.form_data) {
@@ -147,6 +160,29 @@ export default function CreateForm({ type, initialData }: Props) {
       data.append('title', title);
       data.append('color', qrColor);
       data.append('bgcolor', qrBgColor);
+      
+      // Cálculo da data de expiração
+      let expiresAt: string | null = null;
+      if (expiryOption !== 'never') {
+        const now = new Date();
+        if (expiryOption === '1d') now.setDate(now.getDate() + 1);
+        else if (expiryOption === '1w') now.setDate(now.getDate() + 7);
+        else if (expiryOption === '1m') now.setMonth(now.getMonth() + 1);
+        else if (expiryOption === 'custom' && customExpiryDate) {
+           const custom = new Date(customExpiryDate);
+           if (!isNaN(custom.getTime())) {
+              expiresAt = custom.toISOString();
+           }
+        }
+        
+        if (expiryOption !== 'never' && expiryOption !== 'custom') {
+           expiresAt = now.toISOString();
+        }
+      }
+      
+      if (expiresAt) {
+        data.append('expiresAt', expiresAt);
+      }
       
       const fullFormData = { ...formData, pixMode };
       data.append('formDataJson', JSON.stringify(fullFormData));
@@ -444,6 +480,40 @@ export default function CreateForm({ type, initialData }: Props) {
           <div style={{ margin: '2rem 0', height: '1px', background: 'rgba(255,255,255,0.1)' }} />
 
           {renderFormFields()}
+
+          <div style={{ margin: '2rem 0', height: '1px', background: 'rgba(255,255,255,0.1)' }} />
+          
+          <h3 className="outfit" style={{ marginBottom: '1rem', fontSize: '1.2rem' }}>Validade do QR Code</h3>
+          <div className={styles.inputGroup}>
+            <label>Tempo de vida (Expiração)</label>
+            <select 
+              value={expiryOption} 
+              onChange={(e) => setExpiryOption(e.target.value)}
+              className={styles.select}
+            >
+              {isInfiniteAllowed && <option value="never">Infinita (Sem expiração)</option>}
+              <option value="1d">1 dia (24 Horas)</option>
+              <option value="1w">1 semana (7 Dias)</option>
+              <option value="1m">1 mês (30 Dias)</option>
+              <option value="custom">Data Personalizada</option>
+            </select>
+          </div>
+
+          {expiryOption === 'custom' && (
+            <div className={styles.inputGroup} style={{ marginTop: '-1rem' }}>
+              <label>Escolher Data de Validade (Máximo 6 meses)</label>
+              <input 
+                type="date" 
+                value={customExpiryDate} 
+                onChange={(e) => setCustomExpiryDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+                max={new Date(new Date().setMonth(new Date().getMonth() + 6)).toISOString().split('T')[0]}
+              />
+              <p style={{ fontSize: '0.8rem', opacity: 0.6, marginTop: '0.4rem' }}>
+                * O limite máximo permitido para datas personalizadas é de 6 meses.
+              </p>
+            </div>
+          )}
 
           <div style={{ margin: '2rem 0', height: '1px', background: 'rgba(255,255,255,0.1)' }} />
           

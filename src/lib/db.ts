@@ -16,7 +16,7 @@ const db = new Database(DB_PATH);
 // Initialize database
 db.exec(`
   CREATE TABLE IF NOT EXISTS qr_codes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id TEXT PRIMARY KEY,
     type TEXT NOT NULL,
     title TEXT NOT NULL,
     content TEXT NOT NULL,
@@ -24,6 +24,7 @@ db.exec(`
     file_path TEXT,
     color TEXT DEFAULT '#000000',
     bgcolor TEXT DEFAULT '#ffffff',
+    expires_at DATETIME,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `);
