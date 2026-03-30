@@ -65,6 +65,15 @@ A tabela `qr_codes` no SQLite (`database.sqlite`) armazena:
 - **Gestão de Muitos Códigos**: Com o aumento dos tipos, o painel podia ficar poluído.
   - _Solução_: Implementação de barra de busca em tempo real e filtros por categoria.
 
+## Atualização Visal: Tema Light Offwhite (30/03/2026)
+- **Migração de Tema**: O sistema foi migrado de um tema escuro para um tema light "Offwhite" (`#fdfdfd`) para um visual mais limpo e comercial.
+- **Tipografia**: O título principal "Gerador PRO" foi alterado para azul marinho escuro (`#0f172a`) a pedido do usuário.
+- **Glassmorphism 2.0**: Os efeitos de vidro foram recalibrados para funcionar sobre fundos claros, utilizando bordas sutis e sombras suaves.
+- **Segmented Control**: Implementado um novo seletor de modalidade PIX (Estático/Dinâmico) com visual de botões de segmento.
+- **Reorganização de Layout**: A pedidos do usuário, a seção de criação de novos QR Codes foi movida para o topo da página, ficando acima da lista de códigos já gerados.
+
+
+
 ### 6.2. Decisões de Arquitetura
 
 - **Next.js (App Router)**: Escolhido por permitir rotas de API integradas e renderização híbrida.
@@ -86,12 +95,19 @@ A tabela `qr_codes` no SQLite (`database.sqlite`) armazena:
 ## 9. Atualização e Documentação Profissional
 
 - [x] **Criação do README Profissional**: Implementado um README detalhado com banner personalizado, tabela de funcionalidades e guia de tecnologias.
-- [x] **Design do Banner**: Gerado um banner premium com estética Glassmorphism para o repositório.
-- [x] **Sincronização com GitHub**: Realizado o commit e push de todas as novas funcionalidades e melhorias para o repositório remoto.
+- [x] **Configuração para Vercel**: Adição de notas de deploy e preparação de variáveis de ambiente.
+- [x] **Sistema de Ordenação Profissional**: Implementada ordenação dinâmica por Nome, Tipo e Data.
+- [x] **PIX 2.0**: Suporte total a chaves Estáticas (Payload EMV) e Dinâmicas (Location URLs).
+- [x] **Sincronização com GitHub**: Realizado o commit e push de todas as novas funcionalidades e melhorias.
 
 ### 9.1. Procedimento de Upload
 
-1. `git add .` para rastrear todos os novos arquivos (incluindo o banco SQLite e uploads de teste).
-2. `git commit -m "feat: implement professional documentation and sync project updates"`
-3. `git push origin main`
+1. `git pull origin main` (Sincronização preventiva).
+2. `git add .` para rastrear todos os novos arquivos e modificações de design.
+3. `git commit -m "feat: professional PIX modes, advanced sorting and total light theme refactor"`
+4. `git push origin main`
+
+## 10. Conclusão da Fase Atual
+
+O projeto "Gerador PRO" agora conta com uma base sólida para uso comercial, com layout clean, sistema de sorting eficiente e suporte ao padrão bancário brasileiro para PIX. A documentação foi totalmente atualizada para refletir o estado de excelência alcançado.
 

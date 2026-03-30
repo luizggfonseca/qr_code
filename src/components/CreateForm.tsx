@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import QRCode from 'qrcode';
 import { ArrowLeft, Save, Download } from 'lucide-react';
+import { generatePixPayload, generateDynamicPixPayload } from '@/lib/pix-utils';
+
+
 import Link from 'next/link';
 import styles from '@/app/create/create.module.css';
 
@@ -20,6 +23,8 @@ export default function CreateForm({ type }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [qrColor, setQrColor] = useState('#000000');
   const [qrBgColor, setQrBgColor] = useState('#ffffff');
+  const [pixMode, setPixMode] = useState('static');
+
 
   const getTitleByType = () => {
     const titles: any = {
@@ -48,7 +53,18 @@ export default function CreateForm({ type }: Props) {
       case 'email':
         return `mailto:${formData.email || ''}?subject=${encodeURIComponent(formData.subject || '')}&body=${encodeURIComponent(formData.body || '')}`;
       case 'pix':
-        return formData.key || '';
+        if (pixMode === 'dynamic') {
+          return generateDynamicPixPayload(formData.url || '');
+        }
+        return generatePixPayload({
+          key: formData.key || '',
+          name: formData.name || 'RECEBEDOR',
+          city: formData.city || 'CIDADE',
+          amount: formData.amount,
+          txId: formData.txId
+        });
+
+
       case 'instagram':
         return `https://instagram.com/${formData.username?.replace('@', '') || ''}`;
       case 'linkedin':
@@ -181,11 +197,64 @@ export default function CreateForm({ type }: Props) {
         );
       case 'pix':
         return (
-          <div className={styles.inputGroup}>
-            <label>Chave PIX ou Carteira Cripto</label>
-            <input name="key" onChange={handleInputChange} placeholder="Sua chave PIX ou endereço de carteira" />
-          </div>
+          <>
+            <div className={styles.inputGroup} style={{ marginBottom: '2rem' }}>
+              <label>Modalidade PIX</label>
+              <div className={styles.modeToggle}>
+                <button 
+                  className={`${styles.modeBtn} ${pixMode === 'static' ? styles.modeBtnActive : ''}`}
+                  onClick={() => setPixMode('static')}
+                >
+                  Estático
+                </button>
+                <button 
+                  className={`${styles.modeBtn} ${pixMode === 'dynamic' ? styles.modeBtnActive : ''}`}
+                  onClick={() => setPixMode('dynamic')}
+                >
+                  Dinâmico
+                </button>
+              </div>
+            </div>
+
+
+            {pixMode === 'static' ? (
+              <>
+                <div className={styles.inputGroup}>
+                  <label>Chave PIX</label>
+                  <input name="key" onChange={handleInputChange} placeholder="E-mail, CPF, CNPJ ou Celular" />
+                </div>
+                <div className={styles.inputGroup}>
+                  <label>Nome do Recebedor</label>
+                  <input name="name" onChange={handleInputChange} placeholder="Ex: JOAO DA SILVA" />
+                </div>
+                <div className={styles.inputGroup}>
+                  <label>Cidade do Recebedor</label>
+                  <input name="city" onChange={handleInputChange} placeholder="Ex: SAO PAULO" />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div className={styles.inputGroup}>
+                    <label>Valor (Opcional)</label>
+                    <input name="amount" type="number" step="0.01" onChange={handleInputChange} placeholder="0.00" />
+                  </div>
+                  <div className={styles.inputGroup}>
+                    <label>TXID (Identificador)</label>
+                    <input name="txId" onChange={handleInputChange} placeholder="Opcional" />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className={styles.inputGroup}>
+                <label>URL de Cobrança (Location)</label>
+                <input name="url" onChange={handleInputChange} placeholder="Ex: https://pix.me/..." />
+                <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', opacity: 0.6 }}>
+                  Cole o link retornado pela sua API do banco (Endpoint /cob).
+                </p>
+              </div>
+            )}
+          </>
         );
+
+
       case 'instagram':
       case 'linkedin':
         return (

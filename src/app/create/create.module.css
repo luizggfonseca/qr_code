@@ -7,14 +7,16 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #94a3b8;
+  color: #64748b;
   margin-bottom: 2rem;
   transition: color 0.2s;
 }
 
+
 .backLink:hover {
-  color: #fff;
+  color: var(--primary);
 }
+
 
 .layout {
   display: grid;
@@ -34,7 +36,9 @@
 
 .formSection h2 {
   margin-bottom: 1.5rem;
+  color: var(--foreground);
 }
+
 
 .inputGroup {
   margin-bottom: 1.5rem;
@@ -45,21 +49,24 @@
   margin-bottom: 0.5rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #cbd5e1;
+  color: var(--foreground);
+  opacity: 0.8;
 }
+
 
 .inputGroup input,
 .inputGroup textarea,
 .inputGroup select {
   width: 100%;
   padding: 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
   border-radius: 8px;
-  color: white;
+  color: var(--foreground);
   font-family: inherit;
   transition: border-color 0.2s;
 }
+
 
 .inputGroup input:focus,
 .inputGroup textarea:focus {
@@ -96,15 +103,46 @@
 }
 
 .secondaryButton {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: white;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  color: var(--foreground);
   padding: 10px;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
+
 .secondaryButton:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--glass-hover);
 }
+
+.modeToggle {
+  display: flex;
+  gap: 0.5rem;
+  background: var(--glass);
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  margin-top: 0.5rem;
+}
+
+.modeBtn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.modeBtnActive {
+  background: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  color: var(--primary);
+}
+

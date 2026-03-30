@@ -13,16 +13,16 @@
 .title h1 {
   font-size: 2.5rem;
   font-weight: 700;
-  background: linear-gradient(to right, #fff, #94a3b8);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #0f172a;
 }
 
+
+
 .title p {
-  color: #94a3b8;
+  color: #64748b;
   margin-top: 0.5rem;
 }
+
 
 .grid {
   display: grid;
@@ -58,7 +58,9 @@
 .card h3 {
   font-size: 1.25rem;
   font-weight: 600;
+  color: var(--foreground);
 }
+
 
 .card p {
   color: #94a3b8;
@@ -82,13 +84,14 @@
 .searchBar input {
   width: 100%;
   padding: 12px 12px 12px 40px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
-  color: white;
+  color: var(--foreground);
   outline: none;
   transition: border-color 0.2s;
 }
+
 
 .searchBar input:focus {
   border-color: var(--primary);
@@ -112,14 +115,15 @@
 .filterBtn {
   padding: 8px 16px;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #94a3b8;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  color: #64748b;
   white-space: nowrap;
   cursor: pointer;
   transition: all 0.2s;
   font-size: 0.875rem;
 }
+
 
 .filterBtnActive {
   background: var(--primary);

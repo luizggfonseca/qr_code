@@ -48,10 +48,11 @@ const categories = [
 
 export default function Home() {
   const [qrs, setQrs] = useState<any[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeFilter, setActiveFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('date'); // Default: Mais recentes
 
   const fetchQRs = async () => {
     try {
@@ -91,11 +92,14 @@ export default function Home() {
     }
   };
 
-  const filteredQRs = qrs.filter(qr => {
-    const matchesSearch = qr.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = activeFilter === 'all' || qr.type === activeFilter;
-    return matchesSearch && matchesFilter;
-  });
+  const sortedQRs = qrs
+    .filter(qr => qr.title.toLowerCase().includes(searchTerm.toLowerCase()))
+    .sort((a, b) => {
+      if (sortBy === 'name') return a.title.localeCompare(b.title);
+      if (sortBy === 'type') return a.type.localeCompare(b.type);
+      if (sortBy === 'date') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      return 0;
+    });
 
   return (
     <main className="main-container">
@@ -132,26 +136,48 @@ export default function Home() {
           </div>
         </header>
 
-        {/* Seção de Códigos Gerados (Agora no Topo) */}
+        {/* Seção de Criação (No Topo por preferência do usuário) */}
         <section style={{ marginBottom: '5rem' }}>
+          <h2 className="outfit" style={{ marginBottom: '2rem' }}>Criar Novo QR Code</h2>
+          <div className={styles.grid}>
+            {categories.map((cat) => (
+              <Link href={`/create/${cat.id}`} key={cat.id} className={`${styles.card} glass`} style={{ borderLeft: `4px solid ${cat.color}` }}>
+                <div className={styles.iconWrapper} style={{ color: cat.color, background: `${cat.color}15` }}>
+                  <cat.icon size={24} />
+                </div>
+                <div>
+                  <h3>{cat.title}</h3>
+                  <p>{cat.description}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* Seção de Códigos Gerados (Abaixo da criação) */}
+        <section>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
             <h2 className="outfit">Meus Códigos Gerados</h2>
             <div className={styles.filterGroup}>
+              <span style={{ fontSize: '0.8rem', color: '#64748b', marginRight: '0.5rem' }}>Ordenar por:</span>
               <button 
-                className={`${styles.filterBtn} ${activeFilter === 'all' ? styles.filterBtnActive : ''}`}
-                onClick={() => setActiveFilter('all')}
+                className={`${styles.filterBtn} ${sortBy === 'name' ? styles.filterBtnActive : ''}`}
+                onClick={() => setSortBy('name')}
               >
-                Todos
+                Nome
               </button>
-              {['whatsapp', 'pix', 'vcard', 'wifi', 'pdf'].map(type => (
-                <button 
-                  key={type}
-                  className={`${styles.filterBtn} ${activeFilter === type ? styles.filterBtnActive : ''}`}
-                  onClick={() => setActiveFilter(type)}
-                >
-                  {categories.find(c => c.id === type)?.title}
-                </button>
-              ))}
+              <button 
+                className={`${styles.filterBtn} ${sortBy === 'type' ? styles.filterBtnActive : ''}`}
+                onClick={() => setSortBy('type')}
+              >
+                Tipo
+              </button>
+              <button 
+                className={`${styles.filterBtn} ${sortBy === 'date' ? styles.filterBtnActive : ''}`}
+                onClick={() => setSortBy('date')}
+              >
+                Data
+              </button>
             </div>
           </div>
 
@@ -168,9 +194,9 @@ export default function Home() {
           
           {loading ? (
             <p>Carregando registros...</p>
-          ) : filteredQRs.length > 0 ? (
+          ) : sortedQRs.length > 0 ? (
             <div className={styles.grid}>
-              {filteredQRs.map((qr) => (
+              {sortedQRs.map((qr) => (
                 <div key={qr.id} className={`${styles.card} glass`} style={{ padding: '1.5rem', cursor: 'default' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                     <div className={styles.iconWrapper} style={{ width: '32px', height: '32px', color: categories.find(c => c.id === qr.type)?.color || 'var(--primary)' }}>
@@ -200,32 +226,15 @@ export default function Home() {
             </div>
           ) : (
             <div className={`${styles.empty} glass`}>
-              <p>{searchTerm ? 'Nenhum resultado para sua busca.' : 'Sua lista está vazia. Crie seu primeiro QR Code abaixo!'}</p>
+              <p>{searchTerm ? 'Nenhum resultado para sua busca.' : 'Sua lista está vazia. Crie seu primeiro QR Code acima!'}</p>
             </div>
           )}
-        </section>
-
-        {/* Seção de Criação (Agora abaixo dos códigos) */}
-        <section>
-          <h2 className="outfit" style={{ marginBottom: '2rem' }}>Criar Novo QR Code</h2>
-          <div className={styles.grid}>
-            {categories.map((cat) => (
-              <Link href={`/create/${cat.id}`} key={cat.id} className={`${styles.card} glass`} style={{ borderLeft: `4px solid ${cat.color}` }}>
-                <div className={styles.iconWrapper} style={{ color: cat.color, background: `${cat.color}15` }}>
-                  <cat.icon size={24} />
-                </div>
-                <div>
-                  <h3>{cat.title}</h3>
-                  <p>{cat.description}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
         </section>
       </div>
     </main>
   );
 }
+
 
 function QRCodeComponent({ content, color, bgcolor }: { content: string, color?: string, bgcolor?: string }) {
   const [url, setUrl] = useState('');

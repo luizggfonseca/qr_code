@@ -1,38 +1,35 @@
-# 🚀 QR Master - Gerador Avançado de QR Codes
+# 🚀 Gerador PRO - QR Code Inteligente
 
 ## 📋 Sobre o Projeto
 
-O **QR Master** é uma aplicação web moderna e robusta desenvolvida com **Next.js 15**, focada na criação, gestão e customização de QR Codes para diversas finalidades. Desde simples links até configurações complexas de WiFi, cartões de visita (vCard) e pagamentos via PIX.
+O **Gerador PRO** é uma aplicação web de alta performance desenvolvida com **Next.js 15**, focada na criação, gestão e customização profissional de QR Codes. A plataforma oferece suporte avançado para pagamentos via **PIX (Padrão Banco Central)**, vCards, WiFi e compartilhamento de arquivos com Landing Pages exclusivas.
 
-Este projeto foi construído priorizando a experiência do usuário (UX) com uma interface limpa, utilizando princípios de **Glassmorphism** e um sistema de design premium.
+Este projeto utiliza uma estética moderna **Offwhite & Navy Blue**, com interações suaves e um sistema de gerenciamento robusto.
 
 ---
 
 ## ✨ Funcionalidades Principais
 
-| Tipo | Descrição |
+| Recurso | Detalhes |
 | :--- | :--- |
-| **🌐 URL / Link** | Gere QR Codes para qualquer endereço web. |
-| **📶 WiFi** | Compartilhe sua rede com rede, senha e tipo de segurança. |
-| **🎨 Customização PRO** | Altere as cores de fundo e do código de forma dinâmica. |
-| **📄 PDF & Fotos** | Upload de arquivos com Landing Page dedicada para visualização. |
-| **💳 PIX** | Geração de QR Codes para pagamentos instantâneos. |
-| **📱 Social Media** | Suporte para WhatsApp, Instagram, LinkedIn e YouTube. |
-| **📅 Eventos** | Crie convites com data, hora e localização. |
-| **📇 vCard** | Cartão de visita digital completo com contatos. |
-| **🔍 Gerenciamento** | Busca em tempo real e filtros por categoria. |
-| **🖨️ Modo Impressão** | Layout otimizado em folha A4 para impressão imediata. |
+| **💳 PIX Profissional** | Suporte a **PIX Estático** (valor fixo) e **Dinâmico** (URLs de cobrança/Location). |
+| **🔍 Gestão Inteligente** | Filtre e ordene seus códigos por **Nome**, **Tipo** ou **Data**. |
+| **🎨 Design Premium** | Tema claro (Offwhite) com tipografia Navy Blue e efeitos Glassmorphism. |
+| **📄 PDF & Foto Sync** | Hospedagem de arquivos com visualização em Landing Page dedicada. |
+| **📶 WiFi & vCard** | Compartilhamento rápido de redes e contatos profissionais. |
+| **📱 Social Connect** | WhatsApp, Instagram, LinkedIn e YouTube com payloads otimizados. |
+| **🖨️ Print Ready** | Layout otimizado para impressão imediata em alta resolução. |
 
 ---
 
 ## 🛠️ Tecnologias Utilizadas
 
-- **Core**: [Next.js 15](https://nextjs.org/) (App Router)
+- **Core**: [Next.js 15](https://nextjs.org/) (App Router & Turbopack)
 - **Linguagem**: [TypeScript](https://www.typescriptlang.org/)
-- **Banco de Dados**: [SQLite](https://sqlite.org/) com `better-sqlite3`
-- **Estilização**: Modern Vanilla CSS (CSS Modules)
+- **Banco de Dados**: [SQLite](https://sqlite.org/) (Persistência local leve)
+- **Estilização**: CSS Modules (Vanilla CSS moderno)
 - **Ícones**: [Lucide React](https://lucide.dev/)
-- **QR Engine**: `qrcode`
+- **Geração**: `qrcode` (Engine robusta)
 
 ---
 
@@ -60,10 +57,19 @@ Este projeto foi construído priorizando a experiência do usuário (UX) com uma
 
 ## 📁 Estrutura do Projeto
 
-- `src/app`: Rotas e lógica da aplicação.
-- `src/components`: Componentes modulares e reutilizáveis.
-- `src/lib`: Utilitários e conexão com banco de dados.
-- `public/uploads`: Repositório local para arquivos enviados.
+- `src/app`: Rotas, APIs e páginas da aplicação.
+- `src/components`: UI Components (Pills, Modais, Preview).
+- `src/lib`: Lógica de PIX (EMV QRCPS) e DB Helpers.
+- `public/uploads`: Armazenamento de mídia local.
+
+---
+
+## 🌍 Deploy (Vercel)
+
+Para realizar o deploy na Vercel:
+1. Conecte seu repositório GitHub ao painel da Vercel.
+2. Certifique-se de que a variável de ambiente `NEXT_PUBLIC_URL` está configurada com o link de produção.
+3. *Nota*: Como o projeto utiliza SQLite local para persistência simples, os dados salvos serão resetados a cada novo deploy. Para persistência permanente, recomenda-se a migração para [Turso](https://turso.tech).
 
 ---
 
