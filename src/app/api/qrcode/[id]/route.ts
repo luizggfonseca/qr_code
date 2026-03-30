@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { writeFile, unlink, mkdir } from 'fs/promises';
 import path from 'path';
+import { UPLOADS_DIR } from '@/lib/storage-utils';
 
 export async function GET(
   req: NextRequest,
@@ -36,22 +37,22 @@ export async function PUT(
     if (file && file.size > 0) {
       // Delete old file if exists
       const oldQr: any = db.prepare('SELECT file_path FROM qr_codes WHERE id = ?').get(id);
-      if (oldQr && oldQr.file_path) {
+      if (oldQr && oldQr.file_path && oldQr.file_path.startsWith('/api/files/')) {
         try {
-          await unlink(path.join(process.cwd(), 'public', oldQr.file_path));
+          const oldFileName = oldQr.file_path.replace('/api/files/', '');
+          await unlink(path.join(UPLOADS_DIR, oldFileName));
         } catch(e) {}
       }
 
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
       const fileName = `${Date.now()}-${file.name}`;
-      const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
       
-      // Garante que a pasta existe
-      await mkdir(uploadsDir, { recursive: true });
+      // Garante que a pasta existe (no volume ou local)
+      await mkdir(UPLOADS_DIR, { recursive: true });
       
-      filePath = `/uploads/${fileName}`;
-      await writeFile(path.join(uploadsDir, fileName), buffer);
+      filePath = `/api/files/${fileName}`;
+      await writeFile(path.join(UPLOADS_DIR, fileName), buffer);
     }
     
     db.prepare(`

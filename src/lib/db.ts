@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 
 // Database path: uses environment variable for persistence (Railway/VPS) or local file for dev
-const DB_PATH = process.env.DATABASE_PATH || path.join(process.cwd(), 'database.sqlite');
+const DB_PATH = process.env.DATABASE_PATH || (process.env.NODE_ENV === 'production' ? '/app/storage/database.sqlite' : path.join(process.cwd(), 'database.sqlite'));
 
 // Garante que o diretório do banco de dados exista (importante para Volumes do Railway)
 const dbDir = path.dirname(DB_PATH);

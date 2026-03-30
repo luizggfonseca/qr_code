@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
+import { UPLOADS_DIR } from '@/lib/storage-utils';
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,13 +22,12 @@ export async function POST(req: NextRequest) {
       const buffer = Buffer.from(bytes);
       
       const fileName = `${Date.now()}-${file.name}`;
-      const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
       
-      // Garante que a pasta existe
-      await mkdir(uploadsDir, { recursive: true });
+      // Garante que a pasta existe (no volume ou local)
+      await mkdir(UPLOADS_DIR, { recursive: true });
       
-      filePath = `/uploads/${fileName}`;
-      const absolutePath = path.join(uploadsDir, fileName);
+      filePath = `/api/files/${fileName}`;
+      const absolutePath = path.join(UPLOADS_DIR, fileName);
       
       await writeFile(absolutePath, buffer);
     }
