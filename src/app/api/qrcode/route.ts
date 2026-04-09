@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
 
       // 1. Limite de 5 fotos
       if (type === 'photo') {
-        const photoCount: any = db.prepare('SELECT COUNT(*) as count FROM qr_codes WHERE device_id = ? AND type = "photo"').get(deviceId);
+        const photoCount: any = db.prepare('SELECT COUNT(*) as count FROM qr_codes WHERE device_id = ? AND type = ?').get(deviceId, 'photo');
         if (photoCount.count >= MAX_PHOTOS) {
           return NextResponse.json({ success: false, error: `Você atingiu o limite de ${MAX_PHOTOS} galeria de imagens.` }, { status: 403 });
         }
