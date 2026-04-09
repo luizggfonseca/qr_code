@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "QR Code Pro - Gerador Inteligente",
+  title: "QR Code Pro",
   description: "Gere QR Codes para eventos, vCards, WiFi, PDFs e mais.",
 };
 

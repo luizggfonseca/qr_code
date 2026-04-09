@@ -25,6 +25,8 @@ db.exec(`
     color TEXT DEFAULT '#000000',
     bgcolor TEXT DEFAULT '#ffffff',
     expires_at DATETIME,
+    device_id TEXT,
+    file_size INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `);

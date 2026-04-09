@@ -24,6 +24,14 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
+    const deviceId = req.headers.get('x-device-id') || 'unknown';
+
+    // Verificação de Propriedade
+    const existing: any = db.prepare('SELECT device_id FROM qr_codes WHERE id = ?').get(id);
+    if (existing && existing.device_id && existing.device_id !== 'unknown' && existing.device_id !== deviceId) {
+      return NextResponse.json({ error: 'Você não tem permissão para editar este QR Code.' }, { status: 403 });
+    }
+
     const formData = await req.formData();
     const title = formData.get('title') as string;
     const content = formData.get('content') as string;
@@ -32,8 +40,24 @@ export async function PUT(
     const bgcolor = (formData.get('bgcolor') as string) || '#ffffff';
     const expiresAt = formData.get('expiresAt') as string;
     const file = formData.get('file') as File | null;
-
     let filePath = formData.get('file_path') as string | null;
+
+    // --- Validação de Limites no Update ---
+    const currentQr: any = db.prepare('SELECT file_size FROM qr_codes WHERE id = ?').get(id);
+    const oldFileSize = currentQr?.file_size || 0;
+    let newFileSize = oldFileSize;
+
+    if (file && file.size > 0 && deviceId !== 'unknown') {
+      const usage: any = db.prepare('SELECT SUM(file_size) as total FROM qr_codes WHERE device_id = ?').get(deviceId);
+      const totalBytes = (usage.total || 0) - oldFileSize + file.size;
+      const MAX_STORAGE_BYTES = 50 * 1024 * 1024;
+
+      if (totalBytes > MAX_STORAGE_BYTES) {
+        return NextResponse.json({ error: 'Limite de armazenamento de 50MB atingido.' }, { status: 403 });
+      }
+      newFileSize = file.size;
+    }
+    // --------------------------------------
 
     if (file && file.size > 0) {
       // Delete old file if exists
@@ -58,9 +82,9 @@ export async function PUT(
     
     db.prepare(`
       UPDATE qr_codes 
-      SET title = ?, content = ?, form_data = ?, color = ?, bgcolor = ?, file_path = ?
+      SET title = ?, content = ?, form_data = ?, color = ?, bgcolor = ?, file_path = ?, file_size = ?
       WHERE id = ?
-    `).run(title, content, formDataJson, color, bgcolor, filePath, id);
+    `).run(title, content, formDataJson, color, bgcolor, filePath, newFileSize, id);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
@@ -75,6 +99,14 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+    const deviceId = req.headers.get('x-device-id') || 'unknown';
+
+    // Verificação de Propriedade
+    const existing: any = db.prepare('SELECT device_id FROM qr_codes WHERE id = ?').get(id);
+    if (existing && existing.device_id && existing.device_id !== 'unknown' && existing.device_id !== deviceId) {
+      return NextResponse.json({ error: 'Você não tem permissão para excluir este QR Code.' }, { status: 403 });
+    }
+    
     
     // Check if there is a file to delete
     const qr: any = db.prepare('SELECT file_path FROM qr_codes WHERE id = ?').get(id);

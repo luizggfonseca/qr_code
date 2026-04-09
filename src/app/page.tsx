@@ -17,7 +17,6 @@ import {
   Mail,
   Zap,
   Instagram,
-  Linkedin,
   Youtube,
   MessageSquare,
   Search,
@@ -29,19 +28,19 @@ import {
 import Link from "next/link";
 import ModalStyles from "@/components/Modal.module.css";
 import QRCode from 'qrcode';
+import { getDeviceId } from '@/lib/auth-utils';
 
 const categories = [
-  { id: 'whatsapp', title: 'WhatsApp', description: 'Abrir conversa com mensagem', icon: MessageCircle, color: '#25D366' },
-  { id: 'pix', title: 'PIX Pagamento', description: 'Receber via PIX ou Cripto', icon: Zap, color: '#32BCAD' },
-  { id: 'vcard', title: 'vCard Pro', description: 'Cartão de visita profissional', icon: Contact, color: '#3b82f6' },
-  { id: 'wifi', title: 'Conexão WiFi', description: 'Compartilhar rede e senha', icon: Wifi, color: '#f59e0b' },
-  { id: 'event', title: 'Evento Agenda', description: 'Adicionar na agenda iOS/Google', icon: Calendar, color: '#ef4444' },
+  { id: 'whatsapp', title: 'WhatsApp', description: 'Abrir conversa com mensagem pré-definida', icon: MessageCircle, color: '#25D366' },
+  { id: 'pix', title: 'PIX Pagamento', description: 'Receber via PIX', icon: Zap, color: '#32BCAD' },
+  { id: 'vcard', title: 'Cartão de visita', description: 'Cartão de visita profissional', icon: Contact, color: '#3b82f6' },
+  { id: 'wifi', title: 'WiFi', description: 'Compartilhar rede e senha', icon: Wifi, color: '#f59e0b' },
+  { id: 'event', title: 'Eventos', description: 'Adicionar evento na agenda', icon: Calendar, color: '#ef4444' },
   { id: 'instagram', title: 'Instagram', description: 'Link direto para perfil', icon: Instagram, color: '#E1306C' },
-  { id: 'linkedin', title: 'LinkedIn', description: 'Conectar profissionalmente', icon: Linkedin, color: '#0077B5' },
   { id: 'youtube', title: 'YouTube', description: 'Canal ou vídeo específico', icon: Youtube, color: '#FF0000' },
   { id: 'email', title: 'E-mail', description: 'Enviar e-mail pré-preenchido', icon: Mail, color: '#10b981' },
   { id: 'pdf', title: 'Documento PDF', description: 'Hospedar e compartilhar PDFs', icon: FileText, color: '#6366f1' },
-  { id: 'photo', title: 'Galeria Foto', description: 'Hospedar imagens ou fotos', icon: ImageIcon, color: '#8b5cf6' },
+  { id: 'photo', title: 'Galeria de imagens', description: 'Hospedar imagens', icon: ImageIcon, color: '#8b5cf6' },
   { id: 'address', title: 'Localização', description: 'GPS ou Endereço físico', icon: MapPin, color: '#64748b' },
   { id: 'phone', title: 'Telefone', description: 'Ligação instantânea', icon: Phone, color: '#4ade80' },
   { id: 'sms', title: 'SMS', description: 'Enviar torpedo rápido', icon: MessageSquare, color: '#fb923c' },
@@ -49,6 +48,7 @@ const categories = [
 
 export default function Home() {
   const [qrs, setQrs] = useState<any[]>([]);
+  const [currentDeviceId, setCurrentDeviceId] = useState('');
 
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState<number | null>(null);
@@ -68,6 +68,7 @@ export default function Home() {
   };
 
   useEffect(() => {
+    setCurrentDeviceId(getDeviceId());
     fetchQRs();
   }, []);
 
@@ -79,7 +80,12 @@ export default function Home() {
   const confirmDelete = async () => {
     if (!showDeleteModal) return;
     try {
-      const res = await fetch(`/api/qrcode/${showDeleteModal}`, { method: 'DELETE' });
+      const res = await fetch(`/api/qrcode/${showDeleteModal}`, { 
+        method: 'DELETE',
+        headers: {
+          'x-device-id': getDeviceId()
+        }
+      });
       if (res.ok) {
         fetchQRs();
       } else {
@@ -141,18 +147,42 @@ export default function Home() {
         <section style={{ marginBottom: '5rem' }}>
           <h2 className="outfit" style={{ marginBottom: '2rem' }}>Criar Novo QR Code</h2>
           <div className={styles.grid}>
-            {categories.map((cat) => (
-              <Link href={`/create/${cat.id}`} key={cat.id} className={`${styles.card} glass`} style={{ borderLeft: `4px solid ${cat.color}` }}>
-                <div className={styles.iconWrapper} style={{ color: cat.color, background: `${cat.color}15` }}>
-                  <cat.icon size={24} />
-                </div>
-                <div>
-                  <h3>{cat.title}</h3>
-                  <p>{cat.description}</p>
-                </div>
-              </Link>
-            ))}
+            {categories.map((cat) => {
+              const isPhotoLimit = cat.id === 'photo' && qrs.filter(q => q.type === 'photo' && q.device_id === currentDeviceId).length >= 5;
+              
+              return (
+                <Link 
+                  href={isPhotoLimit ? '#' : `/create/${cat.id}`} 
+                  key={cat.id} 
+                  className={`${styles.card} glass ${isPhotoLimit ? styles.cardDisabled : ''}`} 
+                  style={{ 
+                    borderLeft: `4px solid ${isPhotoLimit ? '#cbd5e1' : cat.color}`,
+                    opacity: isPhotoLimit ? 0.6 : 1,
+                    cursor: isPhotoLimit ? 'not-allowed' : 'pointer'
+                  }}
+                  onClick={(e) => {
+                    if (isPhotoLimit) {
+                      e.preventDefault();
+                      alert('Você atingiu o limite de 5 galerias de imagens.');
+                    }
+                  }}
+                >
+                  <div className={styles.iconWrapper} style={{ color: isPhotoLimit ? '#94a3b8' : cat.color, background: `${isPhotoLimit ? '#f1f5f9' : cat.color + '15'}` }}>
+                    <cat.icon size={24} />
+                  </div>
+                  <div>
+                    <h3 style={{ color: isPhotoLimit ? '#94a3b8' : 'inherit' }}>{cat.title}</h3>
+                    <p>{isPhotoLimit ? 'Limite de 5 atingido' : cat.description}</p>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
+          {currentDeviceId && (
+            <div style={{ marginTop: '1.5rem', textAlign: 'right', fontSize: '0.85rem', color: '#64748b' }}>
+              Uso de armazenamento: <strong>{(qrs.filter(q => q.device_id === currentDeviceId).reduce((acc, curr) => acc + (curr.file_size || 0), 0) / (1024 * 1024)).toFixed(2)} MB</strong> / 50 MB
+            </div>
+          )}
         </section>
 
         {/* Seção de Códigos Gerados (Abaixo da criação) */}
@@ -204,15 +234,21 @@ export default function Home() {
                       {getIcon(qr.type)}
                     </div>
                     <div style={{ display: 'flex', gap: '0.8rem' }}>
-                      <Link href={`/edit/${qr.id}`} title="Editar" style={{ color: '#94a3b8' }}>
-                        <Edit2 size={16} />
-                      </Link>
+                      {qr.device_id === currentDeviceId && (
+                        <>
+                          <Link href={`/edit/${qr.id}`} title="Editar" style={{ color: '#94a3b8' }}>
+                            <Edit2 size={16} />
+                          </Link>
+                        </>
+                      )}
                       <Link href={`/print/${qr.id}`} title="Imprimir" style={{ color: '#94a3b8' }}>
                         <Printer size={16} />
                       </Link>
-                      <button onClick={() => setShowDeleteModal(qr.id)} style={{ background: 'none', border: 'none', color: '#f43f5e', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                        <Trash2 size={16} />
-                      </button>
+                      {qr.device_id === currentDeviceId && (
+                        <button onClick={() => setShowDeleteModal(qr.id)} style={{ background: 'none', border: 'none', color: '#f43f5e', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                          <Trash2 size={16} />
+                        </button>
+                      )}
                     </div>
                   </div>
                   <h3 style={{ fontSize: '1rem', marginBottom: '0.25rem' }}>{qr.title}</h3>

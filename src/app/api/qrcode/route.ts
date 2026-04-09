@@ -14,7 +14,34 @@ export async function POST(req: NextRequest) {
     const color = (formData.get('color') as string) || '#000000';
     const bgcolor = (formData.get('bgcolor') as string) || '#ffffff';
     const expiresAt = formData.get('expiresAt') as string; // Opcional
+    const deviceId = (formData.get('deviceId') as string) || req.headers.get('x-device-id') || 'unknown';
     const file = formData.get('file') as File | null;
+
+    // --- Validação de Limites ---
+    if (deviceId !== 'unknown') {
+      const MAX_PHOTOS = 5;
+      const MAX_STORAGE_MB = 50;
+      const MAX_STORAGE_BYTES = MAX_STORAGE_MB * 1024 * 1024;
+
+      // 1. Limite de 5 fotos
+      if (type === 'photo') {
+        const photoCount: any = db.prepare('SELECT COUNT(*) as count FROM qr_codes WHERE device_id = ? AND type = "photo"').get(deviceId);
+        if (photoCount.count >= MAX_PHOTOS) {
+          return NextResponse.json({ success: false, error: `Você atingiu o limite de ${MAX_PHOTOS} galeria de imagens.` }, { status: 403 });
+        }
+      }
+
+      // 2. Limite de 50MB total
+      const usage: any = db.prepare('SELECT SUM(file_size) as total FROM qr_codes WHERE device_id = ?').get(deviceId);
+      const currentBytes = usage.total || 0;
+      const incomingBytes = file ? file.size : 0;
+      
+      if (currentBytes + incomingBytes > MAX_STORAGE_BYTES) {
+        return NextResponse.json({ success: false, error: `Limite de armazenamento de ${MAX_STORAGE_MB}MB atingido.` }, { status: 403 });
+      }
+    }
+    // ---------------------------
+
 
     let filePath = null;
 
@@ -35,11 +62,11 @@ export async function POST(req: NextRequest) {
 
     const id = crypto.randomUUID();
     const stmt = db.prepare(`
-      INSERT INTO qr_codes (id, type, title, content, form_data, file_path, color, bgcolor, expires_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO qr_codes (id, type, title, content, form_data, file_path, color, bgcolor, expires_at, device_id, file_size)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     
-    stmt.run(id, type, title, content, formDataJson, filePath, color, bgcolor, expiresAt || null);
+    stmt.run(id, type, title, content, formDataJson, filePath, color, bgcolor, expiresAt || null, deviceId, file ? file.size : 0);
 
     return NextResponse.json({ 
       success: true, 

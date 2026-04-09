@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import QRCode from 'qrcode';
 import { ArrowLeft, Save, Download } from 'lucide-react';
-import { generatePixPayload, generateDynamicPixPayload } from '@/lib/pix-utils';
+import { generatePixPayload } from '@/lib/pix-utils';
+import { getDeviceId } from '@/lib/auth-utils';
 
 
 import Link from 'next/link';
@@ -14,6 +15,11 @@ interface Props {
   type: string;
   initialData?: any;
 }
+
+const MONTH_NAMES = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+];
 
 export default function CreateForm({ type, initialData }: Props) {
   const router = useRouter();
@@ -26,29 +32,79 @@ export default function CreateForm({ type, initialData }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [qrColor, setQrColor] = useState(initialData?.color || '#000000');
   const [qrBgColor, setQrBgColor] = useState(initialData?.bgcolor || '#ffffff');
-  
-  // Regra: WiFi e PIX permitem "never", os outros expiram por padrão (ex: 1 mês)
-  const isInfiniteAllowed = type === 'wifi' || type === 'pix';
-  const [expiryOption, setExpiryOption] = useState(initialData?.expires_at ? 'custom' : (isInfiniteAllowed ? 'never' : '1m'));
-  
-  const [customExpiryDate, setCustomExpiryDate] = useState('');
-  const [pixMode, setPixMode] = useState(
-    initialData?.form_data ? (JSON.parse(initialData.form_data).pixMode || 'static') : 'static'
-  );
+  const [expiryCategory, setExpiryCategory] = useState('hora');
+  const [expiryDate, setExpiryDate] = useState('');
+  const [expiryTime, setExpiryTime] = useState('');
+  const [expiryValue, setExpiryValue] = useState('1'); // Para o offset de meses
+
+  useEffect(() => {
+    if (!expiryDate || !expiryTime) {
+      const now = new Date();
+      now.setHours(now.getHours() + 1);
+      setExpiryDate(now.toISOString().split('T')[0]);
+      setExpiryTime(now.toTimeString().slice(0, 5));
+    }
+  }, []);
+
+  const nextMonths = useMemo(() => {
+    const list = [];
+    const now = new Date();
+    for (let i = 1; i <= 6; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+        list.push({
+            name: MONTH_NAMES[d.getMonth()],
+            year: d.getFullYear(),
+            offset: i
+        });
+    }
+    return list;
+  }, []);
+
+  const dateLimits = useMemo(() => {
+    const now = new Date();
+    let min = now.toISOString().split('T')[0];
+    let maxDateObj = new Date();
+
+    if (expiryCategory === 'hora') {
+      maxDateObj.setDate(now.getDate() + 1);
+    } else if (expiryCategory === 'dia') {
+      maxDateObj.setDate(now.getDate() + 14);
+    } else if (expiryCategory === 'mes') {
+      const offset = parseInt(expiryValue);
+      const dMin = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+      min = dMin.toISOString().split('T')[0];
+      const dMax = new Date(now.getFullYear(), now.getMonth() + offset + 1, 0);
+      maxDateObj = dMax;
+    }
+
+    const max = maxDateObj.toISOString().split('T')[0];
+    return { min, max };
+  }, [expiryCategory, expiryValue]);
+
 
   useEffect(() => {
     if (initialData?.expires_at) {
-       setExpiryOption('custom');
-       setCustomExpiryDate(new Date(initialData.expires_at).toISOString().split('T')[0]);
+       const expiresAt = new Date(initialData.expires_at);
+       setExpiryDate(expiresAt.toISOString().split('T')[0]);
+       setExpiryTime(expiresAt.toTimeString().slice(0, 5));
+       
+       const now = new Date();
+       const diffMs = expiresAt.getTime() - now.getTime();
+       const diffHours = diffMs / (1000 * 60 * 60);
+
+       if (diffHours <= 25 && diffHours > 0) {
+         setExpiryCategory('hora');
+       } else if (diffHours <= 15 * 24 && diffHours > 0) {
+         setExpiryCategory('dia');
+       } else {
+         setExpiryCategory('mes');
+         const diffMonths = (expiresAt.getFullYear() - now.getFullYear()) * 12 + (expiresAt.getMonth() - now.getMonth());
+         setExpiryValue(Math.min(6, Math.max(1, diffMonths)).toString());
+       }
     }
   }, [initialData]);
 
-  useEffect(() => {
-    if (initialData?.form_data) {
-      const parsed = JSON.parse(initialData.form_data);
-      if (parsed.pixMode) setPixMode(parsed.pixMode);
-    }
-  }, [initialData]);
+
 
   const getTitleByType = () => {
     const titles: any = {
@@ -63,7 +119,6 @@ export default function CreateForm({ type, initialData }: Props) {
       email: 'E-mail',
       pix: 'PIX Pagamento',
       instagram: 'Instagram',
-      linkedin: 'LinkedIn',
       youtube: 'YouTube',
       sms: 'SMS',
     };
@@ -77,9 +132,6 @@ export default function CreateForm({ type, initialData }: Props) {
       case 'email':
         return `mailto:${formData.email || ''}?subject=${encodeURIComponent(formData.subject || '')}&body=${encodeURIComponent(formData.body || '')}`;
       case 'pix':
-        if (pixMode === 'dynamic') {
-          return generateDynamicPixPayload(formData.url || '');
-        }
         return generatePixPayload({
           key: formData.key || '',
           name: formData.name || 'RECEBEDOR',
@@ -91,8 +143,6 @@ export default function CreateForm({ type, initialData }: Props) {
 
       case 'instagram':
         return `https://instagram.com/${formData.username?.replace('@', '') || ''}`;
-      case 'linkedin':
-        return `https://linkedin.com/in/${formData.username || ''}`;
       case 'youtube':
         return formData.url || '';
       case 'sms':
@@ -134,7 +184,7 @@ export default function CreateForm({ type, initialData }: Props) {
     } else {
       setQrDataUrl('');
     }
-  }, [formData, type, qrColor, qrBgColor, pixMode]);
+  }, [formData, type, qrColor, qrBgColor]);
 
   const handleInputChange = (e: any) => {
     const { name, value } = e.target;
@@ -160,23 +210,20 @@ export default function CreateForm({ type, initialData }: Props) {
       data.append('title', title);
       data.append('color', qrColor);
       data.append('bgcolor', qrBgColor);
+      const deviceId = getDeviceId();
+      data.append('deviceId', deviceId);
       
       // Cálculo da data de expiração
       let expiresAt: string | null = null;
-      if (expiryOption !== 'never') {
-        const now = new Date();
-        if (expiryOption === '1d') now.setDate(now.getDate() + 1);
-        else if (expiryOption === '1w') now.setDate(now.getDate() + 7);
-        else if (expiryOption === '1m') now.setMonth(now.getMonth() + 1);
-        else if (expiryOption === 'custom' && customExpiryDate) {
-           const custom = new Date(customExpiryDate);
-           if (!isNaN(custom.getTime())) {
-              expiresAt = custom.toISOString();
-           }
-        }
-        
-        if (expiryOption !== 'never' && expiryOption !== 'custom') {
-           expiresAt = now.toISOString();
+      if (expiryDate && expiryTime) {
+        const target = new Date(`${expiryDate}T${expiryTime}`);
+        if (!isNaN(target.getTime())) {
+          if (target <= new Date()) {
+            alert('A data de expiração deve ser no futuro.');
+            setIsSaving(false);
+            return;
+          }
+          expiresAt = target.toISOString();
         }
       }
       
@@ -184,7 +231,7 @@ export default function CreateForm({ type, initialData }: Props) {
         data.append('expiresAt', expiresAt);
       }
       
-      const fullFormData = { ...formData, pixMode };
+      const fullFormData = { ...formData };
       data.append('formDataJson', JSON.stringify(fullFormData));
       
       let content = generateQRCodeContent();
@@ -203,6 +250,9 @@ export default function CreateForm({ type, initialData }: Props) {
 
       const res = await fetch(url, {
         method,
+        headers: {
+          'x-device-id': getDeviceId()
+        },
         body: data,
       });
 
@@ -255,65 +305,33 @@ export default function CreateForm({ type, initialData }: Props) {
       case 'pix':
         return (
           <>
-            <div className={styles.inputGroup} style={{ marginBottom: '2rem' }}>
-              <label>Modalidade PIX</label>
-              <div className={styles.modeToggle}>
-                <button 
-                  className={`${styles.modeBtn} ${pixMode === 'static' ? styles.modeBtnActive : ''}`}
-                  onClick={() => setPixMode('static')}
-                >
-                  Estático
-                </button>
-                <button 
-                  className={`${styles.modeBtn} ${pixMode === 'dynamic' ? styles.modeBtnActive : ''}`}
-                  onClick={() => setPixMode('dynamic')}
-                >
-                  Dinâmico
-                </button>
+            <div className={styles.inputGroup}>
+              <label>Chave PIX</label>
+              <input name="key" value={formData.key || ''} onChange={handleInputChange} placeholder="E-mail, CPF, CNPJ ou Celular" />
+            </div>
+            <div className={styles.inputGroup}>
+              <label>Nome do Recebedor</label>
+              <input name="name" value={formData.name || ''} onChange={handleInputChange} placeholder="Ex: JOAO DA SILVA" />
+            </div>
+            <div className={styles.inputGroup}>
+              <label>Cidade do Recebedor</label>
+              <input name="city" value={formData.city || ''} onChange={handleInputChange} placeholder="Ex: SAO PAULO" />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div className={styles.inputGroup}>
+                <label>Valor (Opcional)</label>
+                <input name="amount" type="number" step="0.01" value={formData.amount || ''} onChange={handleInputChange} placeholder="0.00" />
+              </div>
+              <div className={styles.inputGroup}>
+                <label>TXID (Identificador)</label>
+                <input name="txId" value={formData.txId || ''} onChange={handleInputChange} placeholder="Opcional" />
               </div>
             </div>
-
-
-            {pixMode === 'static' ? (
-              <>
-                <div className={styles.inputGroup}>
-                  <label>Chave PIX</label>
-                  <input name="key" value={formData.key || ''} onChange={handleInputChange} placeholder="E-mail, CPF, CNPJ ou Celular" />
-                </div>
-                <div className={styles.inputGroup}>
-                  <label>Nome do Recebedor</label>
-                  <input name="name" value={formData.name || ''} onChange={handleInputChange} placeholder="Ex: JOAO DA SILVA" />
-                </div>
-                <div className={styles.inputGroup}>
-                  <label>Cidade do Recebedor</label>
-                  <input name="city" value={formData.city || ''} onChange={handleInputChange} placeholder="Ex: SAO PAULO" />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <div className={styles.inputGroup}>
-                    <label>Valor (Opcional)</label>
-                    <input name="amount" type="number" step="0.01" value={formData.amount || ''} onChange={handleInputChange} placeholder="0.00" />
-                  </div>
-                  <div className={styles.inputGroup}>
-                    <label>TXID (Identificador)</label>
-                    <input name="txId" value={formData.txId || ''} onChange={handleInputChange} placeholder="Opcional" />
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className={styles.inputGroup}>
-                <label>URL de Cobrança (Location)</label>
-                <input name="url" value={formData.url || ''} onChange={handleInputChange} placeholder="Ex: https://pix.me/..." />
-                <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', opacity: 0.6 }}>
-                  Cole o link retornado pela sua API do banco (Endpoint /cob).
-                </p>
-              </div>
-            )}
           </>
         );
 
 
       case 'instagram':
-      case 'linkedin':
         return (
           <div className={styles.inputGroup}>
             <label>Nome de Usuário (Username)</label>
@@ -485,35 +503,72 @@ export default function CreateForm({ type, initialData }: Props) {
           
           <h3 className="outfit" style={{ marginBottom: '1rem', fontSize: '1.2rem' }}>Validade do QR Code</h3>
           <div className={styles.inputGroup}>
-            <label>Tempo de vida (Expiração)</label>
+            <label>Tipo de Expiração</label>
             <select 
-              value={expiryOption} 
-              onChange={(e) => setExpiryOption(e.target.value)}
+              value={expiryCategory} 
+              onChange={(e) => {
+                const newCat = e.target.value;
+                setExpiryCategory(newCat);
+                if (newCat === 'hora') {
+                  const now = new Date();
+                  now.setHours(now.getHours() + 1);
+                  setExpiryDate(now.toISOString().split('T')[0]);
+                } else if (newCat === 'dia') {
+                  const now = new Date();
+                  now.setDate(now.getDate() + 1);
+                  setExpiryDate(now.toISOString().split('T')[0]);
+                } else if (newCat === 'mes') {
+                  setExpiryValue('1');
+                  const now = new Date();
+                  const dMin = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+                  setExpiryDate(dMin.toISOString().split('T')[0]);
+                }
+              }}
               className={styles.select}
             >
-              {isInfiniteAllowed && <option value="never">Infinita (Sem expiração)</option>}
-              <option value="1d">1 dia (24 Horas)</option>
-              <option value="1w">1 semana (7 Dias)</option>
-              <option value="1m">1 mês (30 Dias)</option>
-              <option value="custom">Data Personalizada</option>
+              <option value="hora">Finalizar em Horas (Até 24h)</option>
+              <option value="dia">Finalizar em Dias (Até 14 dias)</option>
+              <option value="mes">Finalizar em Mês Específico (Até 6 meses)</option>
             </select>
           </div>
 
-          {expiryOption === 'custom' && (
+          {expiryCategory === 'mes' && (
             <div className={styles.inputGroup} style={{ marginTop: '-1rem' }}>
-              <label>Escolher Data de Validade (Máximo 6 meses)</label>
-              <input 
-                type="date" 
-                value={customExpiryDate} 
-                onChange={(e) => setCustomExpiryDate(e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
-                max={new Date(new Date().setMonth(new Date().getMonth() + 6)).toISOString().split('T')[0]}
-              />
-              <p style={{ fontSize: '0.8rem', opacity: 0.6, marginTop: '0.4rem' }}>
-                * O limite máximo permitido para datas personalizadas é de 6 meses.
-              </p>
+              <label>Escolher Mês</label>
+              <select value={expiryValue} onChange={(e) => {
+                  setExpiryValue(e.target.value);
+                  const offset = parseInt(e.target.value);
+                  const now = new Date();
+                  const dMin = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+                  setExpiryDate(dMin.toISOString().split('T')[0]);
+              }}>
+                 {nextMonths.map(m => (
+                   <option key={m.offset} value={m.offset.toString()}>{m.name} {m.year}</option>
+                 ))}
+              </select>
             </div>
           )}
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '-0.5rem' }}>
+            <div className={styles.inputGroup}>
+              <label>Data Exata</label>
+              <input 
+                type="date" 
+                min={dateLimits.min} 
+                max={dateLimits.max} 
+                value={expiryDate} 
+                onChange={(e) => setExpiryDate(e.target.value)} 
+              />
+            </div>
+            <div className={styles.inputGroup}>
+              <label>Hora Exata</label>
+              <input 
+                type="time" 
+                value={expiryTime} 
+                onChange={(e) => setExpiryTime(e.target.value)} 
+              />
+            </div>
+          </div>
 
           <div style={{ margin: '2rem 0', height: '1px', background: 'rgba(255,255,255,0.1)' }} />
           

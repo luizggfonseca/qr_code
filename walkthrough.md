@@ -24,14 +24,15 @@ O projeto será dividido em:
 ## 4. Progresso Atual
 
 - [x] Inicialização do projeto Next.js.
-- [x] Instalação de dependências (`qrcode`, `better-sqlite3`, `lucide-react`).
+- [x] Instalação de dependências concluída (`npm install`).
+- [x] Servidor de desenvolvimento iniciado localmente.
 - [x] Configuração do banco de dados SQLite.
 - [x] Design System base com CSS Variables e Glassmorphism.
 - [x] Interface de criação de QR Code (vCard, WiFi, Eventos, etc.).
 - [x] Lógica de upload de arquivos (PDF/Fotos).
 - [x] Visualização e download de QR Codes.
 - [x] Modal de exclusão estilizado com confirmação.
-- [x] Novos tipos: WhatsApp, PIX, Instagram, LinkedIn, YouTube, Email, SMS.
+- [x] Novos tipos: WhatsApp, PIX, Instagram, YouTube, Email, SMS. (LinkedIn removido)
 - [x] Customização PRO: Seleção de cores (Dark/Light) do QR Code.
 - [x] Sistema de Busca e Filtros na Home.
 - [x] Modo de Impressão A4 dedicado.
@@ -133,5 +134,49 @@ O projeto "Gerador PRO" agora conta com uma base sólida para uso comercial, com
 *   **Novo Botão de Ação**: Ícone de edição (`Edit2`) integrado em cada card na listagem principal.
 
 ---
-Documento atualizado em: 30/03/2026
+Documento atualizado em: 08/04/2026
+
+## 12. Correção de Visibilidade em Dropdowns (Listas Suspensas) ✅
+
+*   **Problema**: Em navegadores com temas específicos ou após a migração para o tema "Offwhite", os elementos `select` (listas suspensas) apresentavam texto branco sobre fundo claro, tornando as opções invisíveis ("quadros em branco").
+*   **Solução**: Refatoração do `create.module.css` para utilizar a variável global `--foreground` (#1e293b) nos inputs e selects. Adicionada estilização explícita para os elementos `option` para garantir contraste máximo (fundo branco, texto escuro).
+*   **Melhoria de UI**: Aumentada a opacidade do fundo dos inputs para 0.4 para melhor contraste no tema claro.
+
+## 13. Simplificação do Módulo PIX ✅
+
+*   **Alteração**: Removida a funcionalidade de "PIX Dinâmico" a pedido do usuário, mantendo apenas o "PIX Estático" (Payload EMV).
+*   **Impacto**: Redução da complexidade do formulário e remoção de campos de URL de cobrança, focando na simplicidade de uso imediato.
+
+## 14. Novo Sistema de Validade (Expiração) ✅
+
+*   **Alteração**: Substituído o sistema de presets por uma lógica de categorias dinâmica (Hora, Dia, Mês).
+*   **Regras**:
+    *   **Hora**: Seletor numérico de 1 a 24 horas.
+    *   **Dia**: Seletor de data (Calendário), limitado a no máximo 14 dias de validade.
+    *   **Mês**: Seletor por nome do mês, limitado aos próximos 6 meses.
+*   **Segurança**: O modo "Infinita" foi removido a pedido do usuário, tornando todos os QR Codes temporários.
+
+## 16. Sistema de Propriedade por Dispositivo (Device ID) ✅
+
+*   **Objetivo**: Impedir que usuários apaguem ou editem QR Codes criados por outras pessoas sem a necessidade de contas ou logins.
+*   **Implementação**:
+    *   **Identidade**: Utiliza um UUID persistido no `localStorage` do navegador para identificar a "máquina".
+    *   **Vínculo**: O `device_id` é gravado em uma nova coluna na tabela `qr_codes` no momento da criação.
+    *   **Interface**: Os botões de **Editar** e **Excluir** na Home são renderizados condicionalmente apenas se o ID da máquina coincidir com o do registro.
+    *   **API**: Endpoints `PUT` e `DELETE` possuem verificação de integridade via cabeçalho HTTP `x-device-id`.
+*   **Vantagem**: Segurança proativa com zero fricção para o usuário final.
+
+## 18. Limites de Uso por Dispositivo ✅
+
+*   **Regras de Negócio**:
+    *   **Quantidade**: Máximo de **5 QRs do tipo Galeria de Imagens** por dispositivo.
+    *   **Armazenamento**: Máximo de **50MB de arquivos totais** (PDF + Fotos) por dispositivo.
+*   **Implementação Técnica**:
+    *   Nova coluna `file_size` adicionada para controle de métricas.
+    *   Validação no lado do servidor (API) bloqueia uploads que excedam os limites.
+    *   Feedback Visual na Home: Aba de criação de fotos é desativada e um contador de MB consumidos é exibido.
+
+
+## 17. Remoção do Módulo LinkedIn ✅
+*   **Ação**: O tipo de QR Code "LinkedIn" foi removido completamente do sistema (Home e Formulários) a pedido do usuário para simplificar a oferta de categorias.
 

@@ -12,12 +12,15 @@ Este projeto utiliza uma estética moderna **Offwhite & Navy Blue**, com intera�
 
 | Recurso | Detalhes |
 | :--- | :--- |
-| **💳 PIX Profissional** | Suporte a **PIX Estático** (valor fixo) e **Dinâmico** (URLs de cobrança/Location). |
+| **💳 PIX Estático** | Geração instantânea de pagamento PIX (Payload EMV) com valor e TXID. |
+| **🔒 Propriedade por ID** | Sistema de segurança por **Device ID** (UUID); apenas o criador pode editar ou excluir. |
+| **⏳ Expiração Granular** | Definição exata de vencimento via **Calendário e Hora** (Horas, Dias ou Meses). |
+| **📊 Limites de Uso** | Controle de cota: Máximo de 5 galerias de fotos e 50MB de armazenamento total por usuário. |
 | **🔍 Gestão Inteligente** | Filtre e ordene seus códigos por **Nome**, **Tipo** ou **Data**. |
 | **🎨 Design Premium** | Tema claro (Offwhite) com tipografia Navy Blue e efeitos Glassmorphism. |
 | **📄 PDF & Foto Sync** | Hospedagem de arquivos com visualização em Landing Page dedicada. |
 | **📶 WiFi & vCard** | Compartilhamento rápido de redes e contatos profissionais. |
-| **📱 Social Connect** | WhatsApp, Instagram, LinkedIn e YouTube com payloads otimizados. |
+| **📱 Redes Sociais** | WhatsApp, Instagram e YouTube com payloads otimizados. |
 | **🖨️ Print Ready** | Layout otimizado para impressão imediata em alta resolução. |
 
 ---
