@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import QRCode from 'qrcode';
-import { ArrowLeft, Save, Download } from 'lucide-react';
+import { ArrowLeft, Save, Download, CheckCircle2, AlertCircle, Info, XCircle } from 'lucide-react';
+import FeedbackModal from './FeedbackModal';
 import { generatePixPayload } from '@/lib/pix-utils';
 import { getDeviceId } from '@/lib/auth-utils';
 
@@ -35,7 +36,34 @@ export default function CreateForm({ type, initialData }: Props) {
   const [expiryCategory, setExpiryCategory] = useState('hora');
   const [expiryDate, setExpiryDate] = useState('');
   const [expiryTime, setExpiryTime] = useState('');
+  const [expiryMultiplier, setExpiryMultiplier] = useState('1'); 
   const [expiryValue, setExpiryValue] = useState('1'); // Para o offset de meses
+  
+  const [feedback, setFeedback] = useState<{
+    isOpen: boolean;
+    type: 'success' | 'error' | 'confirm' | 'info';
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    onCancel?: () => void;
+  }>({
+    isOpen: false,
+    type: 'info',
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
+  const showFeedback = (type: 'success' | 'error' | 'confirm' | 'info', title: string, message: string, onConfirm?: () => void, onCancel?: () => void) => {
+    setFeedback({
+      isOpen: true,
+      type,
+      title,
+      message,
+      onConfirm: onConfirm || (() => setFeedback(f => ({ ...f, isOpen: false }))),
+      onCancel: onCancel || (() => setFeedback(f => ({ ...f, isOpen: false }))),
+    });
+  };
 
   useEffect(() => {
     if (!expiryDate || !expiryTime) {
@@ -66,7 +94,7 @@ export default function CreateForm({ type, initialData }: Props) {
     let maxDateObj = new Date();
 
     if (expiryCategory === 'hora') {
-      maxDateObj.setDate(now.getDate() + 1);
+      maxDateObj.setHours(now.getHours() + 24);
     } else if (expiryCategory === 'dia') {
       maxDateObj.setDate(now.getDate() + 14);
     } else if (expiryCategory === 'mes') {
@@ -81,6 +109,43 @@ export default function CreateForm({ type, initialData }: Props) {
     return { min, max };
   }, [expiryCategory, expiryValue]);
 
+  const minTimeLimit = useMemo(() => {
+    if (expiryDate !== dateLimits.min) return "00:00";
+    const now = new Date();
+    return now.toTimeString().slice(0, 5);
+  }, [expiryDate, dateLimits]);
+
+  const maxTimeLimit = useMemo(() => {
+    if (expiryDate !== dateLimits.max) return "23:59";
+    const now = new Date();
+    if (expiryCategory === 'hora') {
+       const maxDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+       return maxDate.toTimeString().slice(0, 5);
+    }
+    if (expiryCategory === 'dia') {
+       const maxDate = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+       return maxDate.toTimeString().slice(0, 5);
+    }
+    return "23:59";
+  }, [expiryDate, dateLimits, expiryCategory]);
+
+
+  useEffect(() => {
+    if (expiryCategory === 'hora') {
+      const now = new Date();
+      const target = new Date(now.getTime() + parseInt(expiryMultiplier || '1') * 60 * 60 * 1000);
+      setExpiryDate(target.toISOString().split('T')[0]);
+      setExpiryTime(target.toTimeString().slice(0, 5));
+    } else if (expiryCategory === 'dia') {
+      const now = new Date();
+      const target = new Date(now.getTime() + parseInt(expiryMultiplier || '1') * 24 * 60 * 60 * 1000);
+      setExpiryDate(target.toISOString().split('T')[0]);
+      setExpiryTime(target.toTimeString().slice(0, 5));
+    } else if (expiryCategory === 'mes') {
+      const now = new Date();
+      setExpiryTime(now.toTimeString().slice(0, 5));
+    }
+  }, [expiryCategory, expiryMultiplier]);
 
   useEffect(() => {
     if (initialData?.expires_at) {
@@ -94,12 +159,12 @@ export default function CreateForm({ type, initialData }: Props) {
 
        if (diffHours <= 25 && diffHours > 0) {
          setExpiryCategory('hora');
+         setExpiryMultiplier(Math.round(diffHours).toString());
        } else if (diffHours <= 15 * 24 && diffHours > 0) {
          setExpiryCategory('dia');
+         setExpiryMultiplier(Math.round(diffHours / 24).toString());
        } else {
          setExpiryCategory('mes');
-         const diffMonths = (expiresAt.getFullYear() - now.getFullYear()) * 12 + (expiresAt.getMonth() - now.getMonth());
-         setExpiryValue(Math.min(6, Math.max(1, diffMonths)).toString());
        }
     }
   }, [initialData]);
@@ -150,7 +215,7 @@ export default function CreateForm({ type, initialData }: Props) {
       case 'event':
         return `BEGIN:VEVENT\nSUMMARY:${formData.summary || ''}\nLOCATION:${formData.location || ''}\nDESCRIPTION:${formData.description || ''}\nDTSTART:${formData.start?.replace(/-/g, '') || ''}T000000Z\nEND:VEVENT`;
       case 'vcard':
-        return `BEGIN:VCARD\nVERSION:3.0\nN:${formData.lastName || ''};${formData.firstName || ''}\nFN:${formData.firstName || ''} ${formData.lastName || ''}\nTEL:${formData.phone || ''}\nEMAIL:${formData.email || ''}\nORG:${formData.company || ''}\nEND:VCARD`;
+        return `BEGIN:VCARD\nVERSION:3.0\nN:${formData.lastName || ''};${formData.firstName || ''}\nFN:${formData.firstName || ''} ${formData.lastName || ''}\nTEL:${formData.phone || ''}\nEMAIL:${formData.email || ''}\nORG:${formData.company || ''}\nTITLE:${formData.role || ''}\nADR:;;${formData.address || ''}\nEND:VCARD`;
       case 'address':
         return `geo:${formData.lat || 0},${formData.lon || 0}?q=${encodeURIComponent(formData.address || '')}`;
       case 'phone':
@@ -199,7 +264,7 @@ export default function CreateForm({ type, initialData }: Props) {
 
   const handleSave = async () => {
     if (!title) {
-      alert('Por favor, dê um título ao seu QR Code');
+      showFeedback('info', 'Título Necessário', 'Por favor, dê um título ao seu QR Code para identificá-lo no painel.');
       return;
     }
 
@@ -217,12 +282,35 @@ export default function CreateForm({ type, initialData }: Props) {
       let expiresAt: string | null = null;
       if (expiryDate && expiryTime) {
         const target = new Date(`${expiryDate}T${expiryTime}`);
+        const now = new Date();
+
         if (!isNaN(target.getTime())) {
-          if (target <= new Date()) {
-            alert('A data de expiração deve ser no futuro.');
+          if (target <= now) {
+            showFeedback('error', 'Data Inválida', 'A data de expiração deve ser no futuro.');
             setIsSaving(false);
             return;
           }
+
+          // Validação Estrita por Categoria
+          const diffMs = target.getTime() - now.getTime();
+          const diffHours = diffMs / (1000 * 60 * 60);
+
+          if (expiryCategory === 'hora' && diffHours > 24.1) {
+            showFeedback('error', 'Tempo Excedido', 'Para o tipo "Horas", a expiração máxima é de 24h a partir de agora.');
+            setIsSaving(false);
+            return;
+          }
+          if (expiryCategory === 'dia' && diffHours > (14 * 24) + 0.1) {
+            showFeedback('error', 'Tempo Excedido', 'Para o tipo "Dias", a expiração máxima é de 14 dias.');
+            setIsSaving(false);
+            return;
+          }
+          if (expiryCategory === 'mes' && diffHours > (185 * 24)) {
+            showFeedback('error', 'Tempo Excedido', 'A expiração máxima permitida é de 6 meses.');
+            setIsSaving(false);
+            return;
+          }
+
           expiresAt = target.toISOString();
         }
       }
@@ -257,14 +345,14 @@ export default function CreateForm({ type, initialData }: Props) {
       });
 
       const result = await res.json();
-      if (result.success) {
+      if (res.ok) {
         router.push('/');
       } else {
-        alert('Erro ao salvar: ' + result.error);
+        showFeedback('error', 'Não foi possível salvar', 'Erro ao salvar QR Code. Verifique se atingiu o limite de fotos (5) ou de armazenamento (50MB).');
       }
     } catch (error) {
-      console.error(error);
-      alert('Erro inesperado ao salvar');
+      console.error('Erro ao salvar:', error);
+      showFeedback('error', 'Erro do Sistema', 'Ocorreu um erro inesperado ao salvar. Tente novamente mais tarde.');
     } finally {
       setIsSaving(false);
     }
@@ -382,13 +470,15 @@ export default function CreateForm({ type, initialData }: Props) {
       case 'vcard':
         return (
           <>
-            <div className={styles.inputGroup}>
-              <label>Nome</label>
-              <input name="firstName" value={formData.firstName || ''} onChange={handleInputChange} placeholder="Ex: João" />
-            </div>
-            <div className={styles.inputGroup}>
-              <label>Sobrenome</label>
-              <input name="lastName" value={formData.lastName || ''} onChange={handleInputChange} placeholder="Ex: Silva" />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div className={styles.inputGroup}>
+                <label>Nome</label>
+                <input name="firstName" value={formData.firstName || ''} onChange={handleInputChange} placeholder="Ex: João" />
+              </div>
+              <div className={styles.inputGroup}>
+                <label>Sobrenome</label>
+                <input name="lastName" value={formData.lastName || ''} onChange={handleInputChange} placeholder="Ex: Silva" />
+              </div>
             </div>
             <div className={styles.inputGroup}>
               <label>Telefone</label>
@@ -399,9 +489,19 @@ export default function CreateForm({ type, initialData }: Props) {
               <input name="email" type="email" value={formData.email || ''} onChange={handleInputChange} placeholder="Ex: joao@exemplo.com" />
             </div>
             <div className={styles.inputGroup}>
-              <label>Empresa</label>
+              <label>Endereço</label>
+              <input name="address" value={formData.address || ''} onChange={handleInputChange} placeholder="Ex: Rua das Flores, 123" />
+            </div>
+            <div className={styles.inputGroup}>
+              <label>Empresa (Opcional)</label>
               <input name="company" value={formData.company || ''} onChange={handleInputChange} placeholder="Ex: Acme Corp" />
             </div>
+            {formData.company && (
+              <div className={styles.inputGroup}>
+                <label>Cargo</label>
+                <input name="role" value={formData.role || ''} onChange={handleInputChange} placeholder="Ex: Gerente Geral" />
+              </div>
+            )}
           </>
         );
       case 'address':
@@ -506,69 +606,66 @@ export default function CreateForm({ type, initialData }: Props) {
             <label>Tipo de Expiração</label>
             <select 
               value={expiryCategory} 
-              onChange={(e) => {
-                const newCat = e.target.value;
-                setExpiryCategory(newCat);
-                if (newCat === 'hora') {
-                  const now = new Date();
-                  now.setHours(now.getHours() + 1);
-                  setExpiryDate(now.toISOString().split('T')[0]);
-                } else if (newCat === 'dia') {
-                  const now = new Date();
-                  now.setDate(now.getDate() + 1);
-                  setExpiryDate(now.toISOString().split('T')[0]);
-                } else if (newCat === 'mes') {
-                  setExpiryValue('1');
-                  const now = new Date();
-                  const dMin = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-                  setExpiryDate(dMin.toISOString().split('T')[0]);
-                }
-              }}
+              onChange={(e) => setExpiryCategory(e.target.value)}
               className={styles.select}
             >
               <option value="hora">Finalizar em Horas (Até 24h)</option>
               <option value="dia">Finalizar em Dias (Até 14 dias)</option>
-              <option value="mes">Finalizar em Mês Específico (Até 6 meses)</option>
+              <option value="mes">Data Personalizada (Até 6 meses)</option>
             </select>
           </div>
 
-          {expiryCategory === 'mes' && (
-            <div className={styles.inputGroup} style={{ marginTop: '-1rem' }}>
-              <label>Escolher Mês</label>
-              <select value={expiryValue} onChange={(e) => {
-                  setExpiryValue(e.target.value);
-                  const offset = parseInt(e.target.value);
-                  const now = new Date();
-                  const dMin = new Date(now.getFullYear(), now.getMonth() + offset, 1);
-                  setExpiryDate(dMin.toISOString().split('T')[0]);
-              }}>
-                 {nextMonths.map(m => (
-                   <option key={m.offset} value={m.offset.toString()}>{m.name} {m.year}</option>
-                 ))}
-              </select>
+          {expiryCategory === 'hora' && (
+            <div className={styles.inputGroup} style={{ marginTop: '-0.5rem' }}>
+              <label>Quantidade de Horas (Max 24)</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <input 
+                  type="number" 
+                  min="1" 
+                  max="24" 
+                  value={expiryMultiplier} 
+                  onChange={(e) => setExpiryMultiplier(e.target.value)} 
+                />
+                <span style={{ fontSize: '0.85rem', color: '#64748b', whiteSpace: 'nowrap' }}>
+                  Expira em: <strong>{new Date(new Date().getTime() + parseInt(expiryMultiplier || '0') * 60 * 60 * 1000).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</strong>
+                </span>
+              </div>
             </div>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '-0.5rem' }}>
-            <div className={styles.inputGroup}>
-              <label>Data Exata</label>
+          {expiryCategory === 'dia' && (
+            <div className={styles.inputGroup} style={{ marginTop: '-0.5rem' }}>
+              <label>Quantidade de Dias (Max 14)</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <input 
+                  type="number" 
+                  min="1" 
+                  max="14" 
+                  value={expiryMultiplier} 
+                  onChange={(e) => setExpiryMultiplier(e.target.value)} 
+                />
+                <span style={{ fontSize: '0.85rem', color: '#64748b', whiteSpace: 'nowrap' }}>
+                  Expira em: <strong>{new Date(new Date().getTime() + parseInt(expiryMultiplier || '0') * 24 * 60 * 60 * 1000).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</strong>
+                </span>
+              </div>
+            </div>
+          )}
+
+          {expiryCategory === 'mes' && (
+            <div className={styles.inputGroup} style={{ marginTop: '-0.5rem' }}>
+              <label>Escolher Data de Expiração (Hora baseada no agora)</label>
               <input 
                 type="date" 
-                min={dateLimits.min} 
-                max={dateLimits.max} 
+                min={new Date().toISOString().split('T')[0]}
+                max={new Date(new Date().setMonth(new Date().getMonth() + 6)).toISOString().split('T')[0]}
                 value={expiryDate} 
                 onChange={(e) => setExpiryDate(e.target.value)} 
               />
+              <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.5rem' }}>
+                O QR Code vencerá às <strong>{expiryTime}</strong> no dia selecionado.
+              </p>
             </div>
-            <div className={styles.inputGroup}>
-              <label>Hora Exata</label>
-              <input 
-                type="time" 
-                value={expiryTime} 
-                onChange={(e) => setExpiryTime(e.target.value)} 
-              />
-            </div>
-          </div>
+          )}
 
           <div style={{ margin: '2rem 0', height: '1px', background: 'rgba(255,255,255,0.1)' }} />
           
@@ -626,6 +723,14 @@ export default function CreateForm({ type, initialData }: Props) {
             </button>
           </div>
         </div>
+        <FeedbackModal 
+          isOpen={feedback.isOpen}
+          type={feedback.type}
+          title={feedback.title}
+          message={feedback.message}
+          onConfirm={feedback.onConfirm}
+          onCancel={feedback.onCancel}
+        />
       </div>
     </div>
   );

@@ -135,13 +135,10 @@ Log atualizado em: 09/04/2026
 ---
 Log atualizado em: 09/04/2026
 
-**USER**: permitir que o mesmo ID publique apenas 5 fotos e tenha no máximo 50mb de uso total
+**USER**: Melhorar UX de expiração, estilizar todos os pop-ups (modais) e atualizar campos do cartão de visita.
 
 **ANTIGRAVITY**:
-- Implementados limites de uso por `deviceId`.
-- **Limite de Fotos**: Máximo de 5 registros do tipo 'Galeria de imagens' por usuário.
-- **Limite de Armazenamento**: Soma total de arquivos (PDF e Fotos) limitada a 50MB por usuário.
-- Adicionada coluna `file_size` no banco de dados para rastreamento preciso.
-- UI: Card de 'Galeria de imagens' é desativado automaticamente ao atingir 5 fotos.
-- UI: Adicionado indicador de uso de armazenamento (MB / 50MB) na tela inicial.
-- API: Validação rigorosa em `POST` e `PUT` protegendo o servidor.
+- **Expiração UX 2.0**: Implementou seletores numéricos para Horas e Dias com cálculo automático e preview em tempo real.
+- **Feedback Premium**: Criou o `FeedbackModal.tsx` e removeu todos os `alert()` e `confirm()` nativos, substituindo por pop-ups modernos com Glassmorphism.
+- **VCard Pro**: Adicionado suporte a Sobrenome, Endereço e Cargo (cargo aparece apenas se Empresa for preenchida).
+- **GitHub**: Sincronizou todas as alterações locais com o repositório remoto.

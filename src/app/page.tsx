@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import ModalStyles from "@/components/Modal.module.css";
+import FeedbackModal from '@/components/FeedbackModal';
 import QRCode from 'qrcode';
 import { getDeviceId } from '@/lib/auth-utils';
 
@@ -51,9 +52,34 @@ export default function Home() {
   const [currentDeviceId, setCurrentDeviceId] = useState('');
 
   const [loading, setLoading] = useState(true);
-  const [showDeleteModal, setShowDeleteModal] = useState<number | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('date'); // Default: Mais recentes
+  const [feedback, setFeedback] = useState<{
+    isOpen: boolean;
+    type: 'success' | 'error' | 'confirm' | 'info';
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    onCancel?: () => void;
+  }>({
+    isOpen: false,
+    type: 'info',
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
+  const showFeedback = (type: 'success' | 'error' | 'confirm' | 'info', title: string, message: string, onConfirm?: () => void, onCancel?: () => void) => {
+    setFeedback({
+      isOpen: true,
+      type,
+      title,
+      message,
+      onConfirm: onConfirm || (() => setFeedback(f => ({ ...f, isOpen: false }))),
+      onCancel: onCancel || (() => setFeedback(f => ({ ...f, isOpen: false }))),
+    });
+  };
 
   const fetchQRs = async () => {
     try {
@@ -77,10 +103,9 @@ export default function Home() {
     return cat ? <cat.icon size={18} /> : <QrIcon size={18} />;
   };
 
-  const confirmDelete = async () => {
-    if (!showDeleteModal) return;
+  const confirmDelete = async (id: number) => {
     try {
-      const res = await fetch(`/api/qrcode/${showDeleteModal}`, { 
+      const res = await fetch(`/api/qrcode/${id}`, { 
         method: 'DELETE',
         headers: {
           'x-device-id': getDeviceId()
@@ -88,14 +113,16 @@ export default function Home() {
       });
       if (res.ok) {
         fetchQRs();
+        showFeedback('success', 'Excluído', 'O QR Code foi removido com sucesso.');
       } else {
         const result = await res.json();
-        alert('Erro ao excluir: ' + result.error);
+        showFeedback('error', 'Erro ao Excluir', result.error || 'Não foi possível remover este item.');
       }
     } catch (err) {
       console.error(err);
+      showFeedback('error', 'Erro do Sistema', 'Falha na comunicação com o servidor.');
     } finally {
-      setShowDeleteModal(null);
+      setDeleteTarget(null);
     }
   };
 
@@ -110,31 +137,25 @@ export default function Home() {
 
   return (
     <main className="main-container">
-      {showDeleteModal && (
-        <div className={ModalStyles.overlay}>
-          <div className={`${ModalStyles.modal} glass`}>
-            <div className={ModalStyles.icon}>
-              <Trash2 size={32} />
-            </div>
-            <h2 className={ModalStyles.title}>Excluir QR Code?</h2>
-            <p className={ModalStyles.text}>Esta ação não pode ser desfeita. O arquivo associado também será removido definitivamente.</p>
-            <div className={ModalStyles.actions}>
-              <button 
-                className={ModalStyles.cancelBtn} 
-                onClick={() => setShowDeleteModal(null)}
-              >
-                Cancelar
-              </button>
-              <button 
-                className={ModalStyles.deleteBtn} 
-                onClick={confirmDelete}
-              >
-                Excluir
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <FeedbackModal 
+        isOpen={feedback.isOpen}
+        type={feedback.type}
+        title={feedback.title}
+        message={feedback.message}
+        onConfirm={feedback.onConfirm}
+        onCancel={feedback.onCancel}
+        confirmText={feedback.type === 'confirm' ? 'Excluir' : 'OK'}
+      />
+
+      <FeedbackModal 
+        isOpen={deleteTarget !== null}
+        type="confirm"
+        title="Excluir QR Code?"
+        message="Esta ação não pode ser desfeita. O arquivo associado também será removido definitivamente."
+        onConfirm={() => confirmDelete(deleteTarget!)}
+        onCancel={() => setDeleteTarget(null)}
+        confirmText="Excluir"
+      />
       <div className={styles.container}>
         <header className={styles.header}>
           <div className={styles.title}>
@@ -163,7 +184,7 @@ export default function Home() {
                   onClick={(e) => {
                     if (isPhotoLimit) {
                       e.preventDefault();
-                      alert('Você atingiu o limite de 5 galerias de imagens.');
+                      showFeedback('error', 'Limite Atingido', 'Você atingiu o limite de 5 galerias de imagens.');
                     }
                   }}
                 >
@@ -245,7 +266,7 @@ export default function Home() {
                         <Printer size={16} />
                       </Link>
                       {qr.device_id === currentDeviceId && (
-                        <button onClick={() => setShowDeleteModal(qr.id)} style={{ background: 'none', border: 'none', color: '#f43f5e', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                        <button onClick={() => setDeleteTarget(qr.id)} style={{ background: 'none', border: 'none', color: '#f43f5e', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                           <Trash2 size={16} />
                         </button>
                       )}
